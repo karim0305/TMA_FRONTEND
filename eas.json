@@ -1,26 +1,74 @@
 {
   "cli": {
-    "version": ">= 16.17.4",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDebug",
+        "buildType": "apk"
+      },
+      "ios": {
+        "developmentClient": true,
+        "distribution": "internal"
+      },
+      "env": {
+        "ENV": "development"
+      },
+      "channel": "development"
     },
-    "preview": {
-      "distribution": "internal"
-    },
-    "production": {
-      "autoIncrement": true
+    "testing": {
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "simulator": true
+      },
+      "env": {
+        "ENV": "testing"
+      },
+      "channel": "testing"
     },
     "apkRelease": {
       "android": {
         "buildType": "apk"
-      }
+      },
+      "env": {
+        "ENV": "production"
+      },
+      "channel": "apk-release"
+    },
+    "production": {
+      "android": {
+        "gradleCommand": ":app:bundleRelease",
+        "buildType": "app-bundle",
+        "credentialsSource": "local"
+      },
+      "ios": {
+        "distribution": "store"
+      },
+      "env": {
+        "ENV": "production"
+      },
+      "channel": "production"
+    },
+    "preview": {
+      "distribution": "internal",
+      "android": {
+        "buildType": "apk"
+      },
+      "ios": {
+        "distribution": "internal"
+      },
+      "channel": "preview"
     }
-  },
-  "submit": {
-    "production": {}
   }
 }
+
+
+
+
+
+

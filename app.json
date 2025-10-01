@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "amsapp",
-    "slug": "ams",
+    "slug": "tma",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -42,9 +42,15 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "e1956d8c-5aca-447f-a630-4f8911e53785"
+        "projectId": "89180dde-b303-486a-b712-db9dd7c9351d"
       }
     },
-    "owner": "mominkarim"
+    "owner": "mominkarim",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/89180dde-b303-486a-b712-db9dd7c9351d"
+    }
   }
 }
