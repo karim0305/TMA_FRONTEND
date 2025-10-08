@@ -1,6 +1,8 @@
-import React, { useState } from "react";
+import { UserApi } from "@/api/apis";
+import { Ionicons } from "@expo/vector-icons";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   StyleSheet,
@@ -9,84 +11,91 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 import Add from "../Models/add";
 import Edit from "../Models/Edit";
 import PackageModal from "../Models/package";
+import { addUser, deleteUser, setUsers, updateUser, User } from "../redux/slices/userSlice";
+import { RootState } from "../redux/store";
 
-export default function ViewTailoers() {
-  const [tailors, setTailors] = useState<any[]>([
-    {
-      id: "1",
-      Name: "Ali Khan",
-      Phone: "03001234567",
-      CNIC: "35202-1234567-1",
-      Address: "Lahore",
-      Role: "Admin",
-      Image: "https://via.placeholder.com/100",
-      PackageType: "Premium",
-      Fee: "2000 PKR",
-      TillDate: "31-Dec-2025",
-    },
-    {
-      id: "2",
-      Name: "Ahmed Raza",
-      Phone: "03007654321",
-      CNIC: "35201-7654321-9",
-      Address: "Karachi",
-      Role: "Tailor",
-      Image: "https://via.placeholder.com/100",
-      PackageType: "Basic",
-      Fee: "1000 PKR",
-      TillDate: "15-Jan-2026",
-    },
-  ]);
-
+export default function ViewTailors() {
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [packageVisible, setPackageVisible] = useState(false);
   const [selectedTailor, setSelectedTailor] = useState<any | null>(null);
 
-  // 🔎 Search state
   const [search, setSearch] = useState("");
 
-  // ✅ Filter by Name, Phone, or CNIC
-  const filteredTailors = tailors.filter(
-    (t) =>
-      t.Name.toLowerCase().includes(search.toLowerCase()) ||
-      t.Phone.includes(search) ||
-      t.CNIC.includes(search)
-  );
+  const dispatch = useDispatch();
+  const users = useSelector((state: RootState) => state.users.list);
 
-  const handleAddTailor = (newTailor: any) => {
-    setTailors((prev) => [...prev, { ...newTailor, id: (prev.length + 1).toString() }]);
+  // 🔥 Fetch Tailors from API
+  useEffect(() => {
+    GetTailors();
+  }, [dispatch]);
+
+  const GetTailors = async () => {
+    try {
+      const res = await axios.get(UserApi.getUsers);
+      const mapped = res.data.map((u: any, index: number) => ({
+        id: u._id || index.toString(),
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        cnic: u.cnic,
+        address: u.address,
+        role: u.role,
+        image: u.image,
+        packageType: u.packageType || "N/A",
+        fee: u.fee || "0",
+        tillDate: u.tillDate || "-",
+      }));
+      dispatch(setUsers(mapped));
+      console.log("Mapped Tailors:", mapped);
+    } catch (err) {
+      console.error("Error fetching tailors:", err);
+    }
   };
 
-  const handleUpdateTailor = (updatedTailor: any) => {
-    setTailors((prev) =>
-      prev.map((t) => (t.id === updatedTailor.id ? updatedTailor : t))
+  // ✅ Filter only Tailors
+  const filteredTailors = users.filter((t) => {
+    const query = search?.toLowerCase() || "";
+    return (
+      t.role?.toLowerCase() === "tailor" &&
+      ((t.name?.toLowerCase() || "").includes(query) ||
+        (t.phone || "").includes(search || "") ||
+        (t.cnic || "").includes(search || ""))
     );
-    Alert.alert("Updated", "Tailor updated successfully!");
+  });
+
+  // CRUD Handlers
+  const handleAddTailor = (newTailor: User) => {
+    dispatch(
+      addUser({
+        ...newTailor,
+        id: Date.now().toString(),
+        role: "tailor", // ensure role
+      })
+    );
   };
 
-  const handleDelete = (id: string) => {
-    setTailors((prev) => prev.filter((t) => t.id !== id));
-    Alert.alert("Deleted", "Tailor deleted successfully!");
+  const handleUpdateTailor = (updatedTailor: User) => {
+    dispatch(updateUser(updatedTailor));
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(UserApi.deleteUser(id));
+      dispatch(deleteUser(id));
+      console.log("Tailor deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting tailor:", error);
+    }
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>All Tailors</Text>
-        <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.addBtnText}>+ Add New</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* 🔎 Search Bar */}
+      {/* 🔍 Search */}
       <TextInput
         style={styles.searchInput}
         placeholder="Search by name, phone, or CNIC..."
@@ -106,27 +115,28 @@ export default function ViewTailoers() {
         renderItem={({ item, index }) => (
           <View style={styles.card}>
             <View style={styles.row}>
-              {/* Image */}
-              <Image source={{ uri: item.Image }} style={styles.avatar} />
-
-              {/* Info */}
+              <Image source={{ uri: item.image }} style={styles.avatar} />
               <View style={styles.info}>
                 <Text style={styles.name}>
-                  {index + 1}. {item.Name}
+                  {index + 1}. {item.name}
                 </Text>
-                <Text style={styles.detail}>📞 {item.Phone}</Text>
-                <Text style={styles.detail}>🪪 {item.CNIC}</Text>
-                <Text style={styles.detail}>🏠 {item.Address}</Text>
-
-                {/* Badges */}
-                <View style={styles.badgeRow}>
-                  <Text style={[styles.badge, { backgroundColor: "#2563eb" }]}>
-                    {item.PackageType}
-                  </Text>
+                <View style={styles.rowDetail}>
+                  <Ionicons name="call-outline" size={16} color="#374151" style={styles.icon} />
+                  <Text style={styles.detail}>{item.phone}</Text>
+                </View>
+                <View style={styles.rowDetail}>
+                  <Ionicons name="id-card-outline" size={16} color="#374151" style={styles.icon} />
+                  <Text style={styles.detail}>{item.cnic}</Text>
+                </View>
+                <View style={styles.rowDetail}>
+                  <Ionicons name="home-outline" size={16} color="#374151" style={styles.icon} />
+                  <Text style={styles.detail}>{item.address}</Text>
                 </View>
 
-                <Text style={styles.detail}>💰 {item.Fee}</Text>
-                <Text style={styles.detail}>⏳ {item.TillDate}</Text>
+                {/* Package Info */}
+                {/* <Text style={styles.detail}>📦 {item.packageType}</Text>
+                <Text style={styles.detail}>💰 {item.fee}</Text>
+                <Text style={styles.detail}>⏳ {item.tillDate}</Text> */}
               </View>
             </View>
 
@@ -164,18 +174,13 @@ export default function ViewTailoers() {
       />
 
       {/* Modals */}
-      <Add
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-        onAdd={handleAddTailor}
-      />
+      <Add visible={modalVisible} onClose={() => setModalVisible(false)} onAdd={handleAddTailor} />
 
       {selectedTailor && (
         <Edit
           visible={editModalVisible}
           tailor={selectedTailor}
           onClose={() => setEditModalVisible(false)}
-          onUpdate={handleUpdateTailor}
         />
       )}
 
@@ -191,25 +196,8 @@ export default function ViewTailoers() {
   );
 }
 
-// Styles
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#f9fafb" },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  heading: { fontSize: 22, fontWeight: "bold", color: "#111827" },
-  addBtn: {
-    backgroundColor: "black",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 14 },
-
-  // 🔎 Search Input
   searchInput: {
     borderWidth: 1,
     borderColor: "#d1d5db",
@@ -218,7 +206,6 @@ const styles = StyleSheet.create({
     marginBottom: 14,
     backgroundColor: "white",
   },
-
   card: {
     backgroundColor: "white",
     padding: 14,
@@ -240,16 +227,6 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontSize: 18, fontWeight: "600", marginBottom: 2, color: "#111827" },
   detail: { fontSize: 14, color: "#374151", marginBottom: 2 },
-  badgeRow: { flexDirection: "row", gap: 8, marginVertical: 4 },
-  badge: {
-    color: "white",
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginRight: 6,
-  },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -263,4 +240,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnText: { color: "white", fontWeight: "600", fontSize: 13 },
+  rowDetail: { flexDirection: "row", alignItems: "center", marginBottom: 2 },
+  icon: { marginRight: 6 },
 });

@@ -1,85 +1,107 @@
+import { UserApi } from "@/api/apis";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
 import {
   Image,
-  Modal,
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
-import RNPickerSelect from "react-native-picker-select";
+import { useDispatch, useSelector } from "react-redux";
+import Edit from "../Models/Edit";
+import { RootState } from "../redux/store";
 
 export default function Profile() {
+  const { currentUser } = useSelector((state: RootState) => state.users);
   const [visible, setVisible] = useState(false);
-    const [isVisible, setIsVisible] = useState(false);
-  const options = ["Male", "Female", "Other"];
+  const [formData, setFormData] = useState<any>(null);
+  const dispatch = useDispatch();
 
-  // Dummy user data
-  const [formData, setFormData] = useState({
-    id: "1",
-    Name: "John Doe",
-    CNIC: "12345-6789012-3",
-    Address: "123 Tailor Street",
-    Phone: "03001234567",
-    Gander: "Male",
-    Role: "Tailor",
-    email: "johndoe@example.com",
-    password: "******",
-    Image: "https://randomuser.me/api/portraits/men/32.jpg", // Dummy profile image
-  });
+  // ✅ Fetch User Details
+  useEffect(() => {
+    if (currentUser?.id || currentUser?.id) {
+      GetOneUser(currentUser.id || currentUser.id);
+    }
+  }, []);
+
+  const GetOneUser = async (userId: string) => {
+    try {
+      const res = await axios.get(UserApi.getUser(userId));
+
+      // ✅ Use res.data directly (since it’s a single object, not an array)
+      const u = res.data;
+
+      setFormData({
+        id: u._id,
+        name: u.name,
+        cnic: u.cnic,
+        address: u.address,
+        phone: u.phone,
+        gender: u.gender || "Not specified",
+        role: u.role,
+        email: u.email,
+        password: "******",
+        image: u.image,
+      });
+     
+    } catch (err) {
+      console.error("❌ Error fetching user:", err);
+    }
+  };
 
   const handleChange = (key: string, value: string) => {
-    setFormData((prev) => ({
+    setFormData((prev: any) => ({
       ...prev,
       [key]: value,
     }));
   };
 
+  if (!formData) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+        <Text>Loading profile...</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
-      {/* Profile View */}
       <ScrollView contentContainerStyle={styles.container}>
         <View style={{ position: "relative" }}>
-          <Image
-            source={{ uri: formData.Image }}
-            style={styles.profileImage}
-          />
-          {/* Camera Icon for editing image */}
+          <Image source={{ uri: formData.image }} style={styles.profileImage} />
           <TouchableOpacity
             style={styles.cameraIcon}
-            onPress={() => alert("Change profile image clicked!")}
+           onPress={() => setVisible(true)}
           >
             <Ionicons name="camera" size={22} color="white" />
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.name}>{formData.Name}</Text>
-        <Text style={styles.role}>{formData.Role}</Text>
+        <Text style={styles.name}>{formData.name}</Text>
+        <Text style={styles.role}>{formData.role}</Text>
 
         <View style={styles.infoBox}>
-          <Info label="CNIC" value={formData.CNIC} />
-          <Info label="Phone" value={formData.Phone} />
+          <Info label="CNIC" value={formData.cnic} />
+          <Info label="Phone" value={formData.phone} />
           <Info label="Email" value={formData.email} />
-          <Info label="Address" value={formData.Address} />
-          <Info label="Gender" value={formData.Gander} />
+          <Info label="Address" value={formData.address} />
         </View>
       </ScrollView>
 
-      {/* Floating Edit Button */}
       <TouchableOpacity style={styles.fab} onPress={() => setVisible(true)}>
         <Ionicons name="pencil" size={28} color="white" />
       </TouchableOpacity>
 
-      {/* Edit Modal */}
-      <Modal visible={visible} animationType="slide" transparent>
+      {/* ✏️ Edit Modal */}
+      {/* <Modal visible={visible} animationType="slide" transparent>
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <View style={{ position: "relative", alignSelf: "center" }}>
               <Image
-                source={{ uri: formData.Image }}
+                source={{ uri: formData.image }}
                 style={styles.profileImage}
               />
               <TouchableOpacity
@@ -95,14 +117,14 @@ export default function Profile() {
             <TextInput
               style={styles.input}
               placeholder="Name"
-              value={formData.Name}
-              onChangeText={(text) => handleChange("Name", text)}
+              value={formData.name}
+              onChangeText={(text) => handleChange("name", text)}
             />
             <TextInput
               style={styles.input}
               placeholder="Phone"
-              value={formData.Phone}
-              onChangeText={(text) => handleChange("Phone", text)}
+              value={formData.phone}
+              onChangeText={(text) => handleChange("phone", text)}
               keyboardType="phone-pad"
             />
             <TextInput
@@ -115,27 +137,19 @@ export default function Profile() {
             <TextInput
               style={styles.input}
               placeholder="Address"
-              value={formData.Address}
-              onChangeText={(text) => handleChange("Address", text)}
+              value={formData.address}
+              onChangeText={(text) => handleChange("address", text)}
             />
 
             <RNPickerSelect
-              onValueChange={(value) => handleChange("Gander", value)}
-              value={formData.Gander}
+              onValueChange={(value) => handleChange("gender", value)}
+              value={formData.gender}
               placeholder={{ label: "Select Gender", value: null }}
               items={[
                 { label: "Male", value: "Male" },
                 { label: "Female", value: "Female" },
                 { label: "Other", value: "Other" },
               ]}
-            />
-
-            <TextInput
-              style={styles.input}
-              placeholder="Password"
-              value={formData.password}
-              onChangeText={(text) => handleChange("password", text)}
-              secureTextEntry
             />
 
             <TouchableOpacity
@@ -152,7 +166,14 @@ export default function Profile() {
             </TouchableOpacity>
           </View>
         </View>
-      </Modal>
+      </Modal> */}
+
+       <Edit
+                visible={visible}
+                tailor={formData} // 👈 still generic
+                onClose={() => setVisible(false)}
+                 
+              />
     </View>
   );
 }
@@ -161,22 +182,14 @@ function Info({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}:</Text>
-      <Text style={styles.infoValue}>{value}</Text>
+      <Text style={styles.infoValue}>{value || "N/A"}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 16,
-  },
+  container: { alignItems: "center", paddingVertical: 40 },
+  profileImage: { width: 120, height: 120, borderRadius: 60, marginBottom: 16 },
   cameraIcon: {
     position: "absolute",
     bottom: 10,
@@ -185,20 +198,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 6,
   },
-  name: {
-    fontSize: 24,
-    fontWeight: "700",
-  },
-  role: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 20,
-  },
+  name: { fontSize: 24, fontWeight: "700" },
+  role: { fontSize: 16, color: "#555", marginBottom: 20 },
   infoBox: {
     width: "90%",
     backgroundColor: "#fff",
     padding: 16,
-  
     borderRadius: 12,
     elevation: 3,
     shadowColor: "#000",
@@ -212,17 +217,8 @@ const styles = StyleSheet.create({
     borderBottomWidth: 0.5,
     borderColor: "#ccc",
   },
-  infoLabel: {
-    fontWeight: "600",
-    fontSize: 20,
-    color: "#333",
-  },
-  infoValue: {
-    color: "#444",
-    maxWidth: "60%",
-    fontSize: 15,
-    textAlign: "right",
-  },
+  infoLabel: { fontWeight: "600", fontSize: 18, color: "#333" },
+  infoValue: { color: "#444", maxWidth: "60%", fontSize: 16, textAlign: "right" },
   fab: {
     position: "absolute",
     bottom: 20,
@@ -247,12 +243,7 @@ const styles = StyleSheet.create({
     backgroundColor: "white",
     borderRadius: 10,
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
+  modalTitle: { fontSize: 20, fontWeight: "bold", marginBottom: 15, textAlign: "center" },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
@@ -268,9 +259,5 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 10,
   },
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
+  buttonText: { color: "#fff", fontSize: 16, fontWeight: "600" },
 });

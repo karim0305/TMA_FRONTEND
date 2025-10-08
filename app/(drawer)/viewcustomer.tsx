@@ -1,7 +1,11 @@
+import { UserApi } from "@/api/apis";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
 import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-  Alert,
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -10,89 +14,130 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import Add from "../Models/add"; // Customer add form
-import Edit from "../Models/Edit"; // Customer edit form
+import { useDispatch, useSelector } from "react-redux";
+import Add from "../Models/add"; // Customer add modal
+import Edit from "../Models/Edit"; // Customer edit modal
+import {
+  addUser,
+  deleteUser,
+  setUsers,
+  updateUser,
+  User,
+} from "../redux/slices/userSlice";
+import { RootState } from "../redux/store";
 
 export default function ViewCustomers() {
-  const router = useRouter();
-  const [customers, setCustomers] = useState<any[]>([
-    {
-      id: "1",
-      Name: "Muhammad Ali",
-      Phone: "03001234567",
-      Email: "ali@example.com",
-      Address: "Lahore",
-      Role: "Customer",
-      Image: "https://via.placeholder.com/100",
-      Chest: "38",
-      Waist: "34",
-      Length: "40",
-    },
-    {
-      id: "2",
-      Name: "Sara Ahmed",
-      Phone: "03123456789",
-      Email: "sara@example.com",
-      Address: "Karachi",
-      Role: "Customer",
-      Image: "https://via.placeholder.com/100",
-      Chest: "36",
-      Waist: "32",
-      Length: "38",
-    },
-  ]);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<any | null>(null);
-
-  // 🔎 Search state
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true); // ✅ Loading state
 
-  // ✅ Filter customers by name, email, or phone
-  const filteredCustomers = customers.filter(
-    (c) =>
-      c.Name.toLowerCase().includes(search.toLowerCase()) ||
-      c.Email.toLowerCase().includes(search.toLowerCase()) ||
-      c.Phone.includes(search)
-  );
+  const navigation = useNavigation();
+  const router = useRouter();
+  const dispatch = useDispatch();
 
-  // Add
-  const handleAddCustomer = (newCustomer: any) => {
-    setCustomers((prev) => [
-      ...prev,
-      { ...newCustomer, id: (prev.length + 1).toString() },
-    ]);
-  };
+  const users = useSelector((state: RootState) => state.users.list);
+  const { currentUser } = useSelector((state: RootState) => state.users);
 
-  // Update
-  const handleUpdateCustomer = (updatedCustomer: any) => {
-    setCustomers((prev) =>
-      prev.map((c) => (c.id === updatedCustomer.id ? updatedCustomer : c))
-    );
-    Alert.alert("Updated", "Customer updated successfully!");
-  };
-
-  // Delete
-  const handleDelete = (id: string) => {
-    setCustomers((prev) => prev.filter((c) => c.id !== id));
-    Alert.alert("Deleted", "Customer deleted successfully!");
-  };
-
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>All Customers</Text>
+  // ✅ Add "+" button to header
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.addBtnText}>+ Add Customer</Text>
+          <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>
-      </View>
+      ),
+    });
+  }, [navigation]);
 
-      {/* 🔎 Search Bar */}
+  // ✅ Fetch customers when current user is available
+  useEffect(() => {
+    if (currentUser?.id) {
+      console.log("✅ Current user ID:", currentUser.id);
+      GetCustomers();
+    } else {
+      console.log("⚠️ currentUser not found yet");
+    }
+  }, [currentUser]);
+
+  // ✅ Fetch customers function
+  const GetCustomers = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.get(UserApi.getUsers);
+      const mapped = res.data.map((u: any, index: number) => ({
+        id: u._id || index.toString(),
+        UserId: u.UserId,
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        cnic: u.cnic,
+        address: u.address,
+        role: u.role,
+        image: u.image,
+        chest: u.chest,
+        waist: u.waist,
+        length: u.length,
+      }));
+      dispatch(setUsers(mapped));
+      console.log("✅ Customers fetched:", mapped.length);
+    } catch (err) {
+      console.error("❌ Error fetching customers:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ✅ Add customer
+  const handleAddCustomer = (newCustomer: User) => {
+    dispatch(
+      addUser({
+        ...newCustomer,
+        id: Date.now().toString(),
+      })
+    );
+  };
+
+  // ✅ Update customer
+  const handleUpdateCustomer = (updatedCustomer: User) => {
+    dispatch(updateUser(updatedCustomer));
+  };
+
+  // ✅ Delete customer
+  const handleDelete = async (id: string) => {
+    try {
+      await axios.delete(UserApi.deleteUser(id));
+      dispatch(deleteUser(id));
+      console.log("Customer deleted successfully!");
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+    }
+  };
+
+  // ✅ Filter customers
+  const filteredCustomers = users.filter((c) => {
+    const query = search?.toLowerCase() || "";
+    const isAdmin = currentUser?.role?.toLowerCase() === "admin";
+
+    return (
+      c.role?.toLowerCase() === "customer" &&
+      (isAdmin || c.UserId === currentUser?.id) && // ✅ Admin sees all
+      (
+        (c.name?.toLowerCase() || "").includes(query) ||
+        (c.email?.toLowerCase() || "").includes(query) ||
+        (c.phone || "").includes(search || "")
+      )
+    );
+  });
+
+  // ✅ UI
+  return (
+    <View style={styles.container}>
+      {/* 🔍 Search Bar */}
       <TextInput
         style={styles.searchInput}
         placeholder="Search by name, email, or phone..."
@@ -100,76 +145,93 @@ export default function ViewCustomers() {
         onChangeText={setSearch}
       />
 
-      {/* List */}
-      <FlatList
-        data={filteredCustomers}
-        keyExtractor={(item) => item.id}
-        ListEmptyComponent={
-          <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
-            No customer found
-          </Text>
-        }
-        renderItem={({ item, index }) => (
-          <View style={styles.card}>
-            <View style={styles.row}>
-              {/* Image */}
-              <Image source={{ uri: item.Image }} style={styles.avatar} />
+      {/* ✅ Loading indicator */}
+      {loading ? (
+        <ActivityIndicator size="large" color="black" style={{ marginTop: 40 }} />
+      ) : (
+        <FlatList
+          data={filteredCustomers}
+          keyExtractor={(item) => item.id}
+          ListEmptyComponent={
+            <Text style={{ textAlign: "center", marginTop: 20, color: "gray" }}>
+              No customer found
+            </Text>
+          }
+          renderItem={({ item, index }) => (
+            <View style={styles.card}>
+              <View style={styles.row}>
+                {/* Image */}
+                <Image source={{ uri: item.image }} style={styles.avatar} />
 
-              {/* Info */}
-              <View style={styles.info}>
-                <Text style={styles.name}>
-                  {index + 1}. {item.Name}
-                </Text>
-                <Text style={styles.detail}>📞 {item.Phone}</Text>
-                <Text style={styles.detail}>📧 {item.Email}</Text>
-                <Text style={styles.detail}>🏠 {item.Address}</Text>
+                {/* Info */}
+                <View style={styles.info}>
+                  <Text style={styles.name}>
+                    {index + 1}. {item.name}
+                  </Text>
 
-                {/* Measurements Badges */}
-                <View style={styles.badgeRow}>
-                  <Text style={[styles.badge, { backgroundColor: "#16a34a" }]}>
-                    Chest: {item.Chest}"
-                  </Text>
-                  <Text style={[styles.badge, { backgroundColor: "#2563eb" }]}>
-                    Waist: {item.Waist}"
-                  </Text>
-                  <Text style={[styles.badge, { backgroundColor: "#9333ea" }]}>
-                    Length: {item.Length}"
-                  </Text>
+                  <View style={styles.rowDetail}>
+                    <Ionicons
+                      name="call-outline"
+                      size={16}
+                      color="#374151"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.detail}>{item.phone}</Text>
+                  </View>
+
+                  <View style={styles.rowDetail}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={16}
+                      color="#374151"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.detail}>{item.email}</Text>
+                  </View>
+
+                  <View style={styles.rowDetail}>
+                    <Ionicons
+                      name="home-outline"
+                      size={16}
+                      color="#374151"
+                      style={styles.icon}
+                    />
+                    <Text style={styles.detail}>{item.id}</Text>
+                  </View>
                 </View>
               </View>
+
+              {/* Actions */}
+              <View style={styles.actions}>
+                <TouchableOpacity
+                  style={[styles.btn, { backgroundColor: "black" }]}
+                  onPress={() => {
+                    setSelectedCustomer(item);
+                    setEditModalVisible(true);
+                  }}
+                >
+                  <Text style={styles.btnText}>✏️ Edit</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, { backgroundColor: "#ef4444" }]}
+                  onPress={() => handleDelete(item.id)}
+                >
+                  <Text style={styles.btnText}>🗑 Delete</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.btn, { backgroundColor: "#3b82f6" }]}
+                  onPress={() => router.push(`/viewmeasurments?customerId=${item.id}`)}
+                >
+                  <Text style={styles.btnText}>📏 Measure</Text>
+                </TouchableOpacity>
+              </View>
             </View>
-
-            {/* Actions */}
-            <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.btn, { backgroundColor: "black" }]}
-                onPress={() => {
-                  setSelectedCustomer(item);
-                  setEditModalVisible(true);
-                }}
-              >
-                <Text style={styles.btnText}>✏️ Edit</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.btn, { backgroundColor: "#ef4444" }]}
-                onPress={() => handleDelete(item.id)}
-              >
-                <Text style={styles.btnText}>🗑 Delete</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.btn, { backgroundColor: "#3b82f6" }]}
-                onPress={() => {
-                  router.push(`/viewmeasurments?id=${item.id}`);
-                }}
-              >
-                <Text style={styles.btnText}>📏 Measure</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
+       
 
       {/* Modals */}
       <Add
@@ -183,41 +245,26 @@ export default function ViewCustomers() {
           visible={editModalVisible}
           tailor={selectedCustomer}
           onClose={() => setEditModalVisible(false)}
-          onUpdate={handleUpdateCustomer}
         />
       )}
+      
     </View>
+
   );
 }
 
-// Styles
+// ✅ Styles
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#f9fafb" },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 10,
-  },
-  heading: { fontSize: 22, fontWeight: "bold", color: "#111827" },
-  addBtn: {
-    backgroundColor: "black",
-    paddingHorizontal: 14,
+  searchInput: {
+    backgroundColor: "white",
+    paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-  },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 14 },
-
-  // 🔎 Search Input
-  searchInput: {
     borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 8,
-    padding: 10,
+    borderColor: "#e5e7eb",
     marginBottom: 14,
-    backgroundColor: "white",
   },
-
   card: {
     backgroundColor: "white",
     padding: 14,
@@ -239,16 +286,14 @@ const styles = StyleSheet.create({
   info: { flex: 1 },
   name: { fontSize: 18, fontWeight: "600", marginBottom: 2, color: "#111827" },
   detail: { fontSize: 14, color: "#374151", marginBottom: 2 },
-  badgeRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginVertical: 4 },
-  badge: {
-    color: "white",
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginRight: 6,
+  addBtn: {
+    backgroundColor: "black",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginEnd: 10,
   },
+  addBtnText: { color: "white", fontWeight: "600", fontSize: 14 },
   actions: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -262,4 +307,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnText: { color: "white", fontWeight: "600", fontSize: 13 },
+  rowDetail: { flexDirection: "row", alignItems: "center", marginBottom: 2 },
+  icon: { marginRight: 6 },
 });

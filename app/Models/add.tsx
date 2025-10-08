@@ -1,8 +1,9 @@
+import { UserApi } from "@/api/apis";
 import { Picker } from "@react-native-picker/picker";
+import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import React, { useState } from "react";
 import {
-  Alert,
   Image,
   Modal,
   ScrollView,
@@ -10,180 +11,237 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { addUser } from "../redux/slices/userSlice"; // 👈 slice se import
+import { RootState } from "../redux/store";
 
 interface AddProps {
   visible: boolean;
   onClose: () => void;
-  onAdd: (tailor: any) => void;
+  onAdd: (user: any) => void; // Parent state update
 }
 
 export default function Add({ visible, onClose, onAdd }: AddProps) {
-  const [newTailor, setNewTailor] = useState({
-    Name: "",
-    Phone: "",
-    CNIC: "",
-    Address: "",
-    Role: "",
-    Email: "",
-    Password: "",
-    Image: "",
+     const { currentUser } = useSelector((state: RootState) => state.users);
+  const [loading, setLoading] = useState(false);
+//  useEffect(() => {
+//     if (currentUser?.id || currentUser?.id) {
+//      const UserId === currentUser?.id,
+//     }
+//   }, []);
+
+  const [newUser, setNewUser] = useState({
+    UserId: "",
+    name: "",
+    phone: "",
+    cnic: "",
+    address: "",
+    role: "",
+    email: "",
+    password: "",
+    image: "", // local uri before upload
   });
 
-  // 🔹 Image picker function
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 4],
-      quality: 1,
-    });
+  // Cloudinary config
+  const CLOUD_NAME = "dzfqgziwl";
+  const UPLOAD_PRESET = "tailorImages";
 
-    if (!result.canceled) {
-      setNewTailor((prev) => ({ ...prev, Image: result.assets[0].uri }));
-    }
-  };
+  // Pick image from gallery
+ 
+  // 👇 Pick Image
+ const pickImage = async () => {
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    allowsEditing: true,
+    aspect: [4, 4],
+    quality: 0.8,
+    base64: true, // 👈 enable base64
+  });
 
-  const handleAddTailor = () => {
-    if (
-      !newTailor.Name ||
-      !newTailor.Phone ||
-      !newTailor.CNIC ||
-      !newTailor.Address ||
-      !newTailor.Role ||
-      !newTailor.Email ||
-      !newTailor.Password
-    ) {
-      Alert.alert("Error", "Please fill all fields");
-      return;
-    }
+  if (!result.canceled && result.assets.length > 0) {
+    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+    const imageUrl = await uploadToCloudinary(base64Img);
 
-    onAdd({ ...newTailor, id: Date.now().toString() });
-    setNewTailor({
-      Name: "",
-      Phone: "",
-      CNIC: "",
-      Address: "",
-      Role: "",
-      Email: "",
-      Password: "",
-      Image: "",
-    });
+    setNewUser((prev) => ({
+      ...prev,
+      image: imageUrl, // directly save Cloudinary URL
+    }));
+  }
+};
+
+const uploadToCloudinary = async (file: string) => {
+  const formData = new FormData();
+  formData.append("file", file); // 👈 base64 string
+  formData.append("upload_preset", "tailorImages");
+
+  try {
+    const res = await axios.post(
+      "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
+      formData
+    );
+    return res.data.secure_url;
+  } catch (err) {
+    //console.error("❌ Cloudinary Upload Error:", err.response?.data || err.message);
+    throw new Error("Image upload failed");
+  }
+};
+
+  // 👇 Add User (with Cloudinary URL)
+const dispatch = useDispatch();
+const handleAddUser = async () => {
+  try {
+    
+    setLoading(true);
+
+    const userPayload = {
+      ...newUser,
+      // newUser.image already has the Cloudinary URL
+      image: newUser.image,
+      UserId:currentUser?.id
+    };
+
+    const res = await axios.post(UserApi.addUser, userPayload);
+       dispatch(addUser(res.data));
+    console.log("✅ User Added Successfully:", res.data);
     onClose();
-  };
+
+    // Reset form
+    // setNewUser({
+    //   name: "",
+    //   phone: "",
+    //   cnic: "",
+    //   address: "",
+    //   role: "",
+    //   email: "",
+    //   password: "",
+    //   image: "",
+    // });
+  } catch (err: any) {
+    console.error("❌ Error:", err.response?.data || err.message);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalHeading}>Add New</Text>
+          <Text style={styles.modalHeading}>Add New User</Text>
 
           <ScrollView>
             <TextInput
               style={styles.input}
               placeholder="Name"
-              value={newTailor.Name}
+              value={newUser.name}
               onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, Name: text }))
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Phone"
-              value={newTailor.Phone}
-              onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, Phone: text }))
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="CNIC"
-              value={newTailor.CNIC}
-              onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, CNIC: text }))
-              }
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Address"
-              value={newTailor.Address}
-              onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, Address: text }))
+                setNewUser((prev) => ({ ...prev, name: text }))
               }
             />
 
-            {/* 🔹 Email */}
+            <TextInput
+              style={styles.input}
+              placeholder="Phone"
+              value={newUser.phone}
+              onChangeText={(text) =>
+                setNewUser((prev) => ({ ...prev, phone: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="CNIC"
+              value={newUser.cnic}
+              onChangeText={(text) =>
+                setNewUser((prev) => ({ ...prev, cnic: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.input}
+              placeholder="Address"
+              value={newUser.address}
+              onChangeText={(text) =>
+                setNewUser((prev) => ({ ...prev, address: text }))
+              }
+            />
+
             <TextInput
               style={styles.input}
               placeholder="Email"
               keyboardType="email-address"
               autoCapitalize="none"
-              value={newTailor.Email}
+              value={newUser.email}
               onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, Email: text }))
+                setNewUser((prev) => ({ ...prev, email: text }))
               }
             />
 
-            {/* 🔹 Password */}
-            <TextInput
+         
+
+           {/* Show Role Dropdown only if current user is Admin */}
+{currentUser?.role === "Admin" && (
+  <View style={styles.pickerWrapper}>
+       <TextInput
               style={styles.input}
               placeholder="Password"
               secureTextEntry
-              value={newTailor.Password}
+              value={newUser.password}
               onChangeText={(text) =>
-                setNewTailor((prev) => ({ ...prev, Password: text }))
+                setNewUser((prev) => ({ ...prev, password: text }))
               }
             />
+    <Picker
+      selectedValue={newUser.role}
+      onValueChange={(value) =>
+        setNewUser((prev) => ({ ...prev, role: value }))
+      }
+    >
+      <Picker.Item label="Select Role" value="" />
+      <Picker.Item label="Admin" value="Admin" />
+      <Picker.Item label="Tailor" value="Tailor" />
+      <Picker.Item label="Customer" value="Customer" />
+    </Picker>
+  </View>
+)}
 
-            {/* 🔹 Role Dropdown */}
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={newTailor.Role}
-                onValueChange={(value) =>
-                  setNewTailor((prev) => ({ ...prev, Role: value }))
-                }
-              >
-                <Picker.Item label="Select Role" value="" />
-                <Picker.Item label="Admin" value="Admin" />
-                <Picker.Item label="Tailor" value="Tailor" />
-                <Picker.Item label="Customer" value="Customer" />
-              </Picker>
-            </View>
 
-            {/* 🔹 Image Picker Button */}
             <TouchableOpacity
-              style={[
-                styles.btn,
-                { backgroundColor: "#3b82f6", marginBottom: 10 },
-              ]}
-              onPress={pickImage}
-            >
-              <Text style={styles.btnText}>Pick Image</Text>
-            </TouchableOpacity>
+        style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
+        onPress={pickImage}
+      >
+        <Text style={styles.btnText}>Pick Image</Text>
+      </TouchableOpacity>
 
-            {/* 🔹 Preview Image */}
-            {newTailor.Image ? (
-              <View style={{ alignItems: "center", marginBottom: 10 }}>
-                <Image
-                  source={{ uri: newTailor.Image }}
-                  style={{ width: 80, height: 80, borderRadius: 8 }}
-                />
-              </View>
-            ) : null}
+      {/* Preview Selected Image */}
+      {newUser.image ? (
+        <View style={{ alignItems: "center", marginBottom: 10 }}>
+          <Image
+            source={{ uri: newUser.image }}
+            style={{ width: 80, height: 80, borderRadius: 8 }}
+          />
+        </View>
+      ) : null}
           </ScrollView>
 
-          {/* Buttons */}
           <View style={styles.modalActions}>
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: "black", flex: 1 }]}
-              onPress={handleAddTailor}
+              onPress={handleAddUser}
+              disabled={loading}
             >
-              <Text style={styles.btnText}>Add</Text>
+              <Text style={styles.btnText}>
+                {loading ? "Adding..." : "Add"}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: "gray", flex: 1 }]}
               onPress={onClose}
+              disabled={loading}
             >
               <Text style={styles.btnText}>Cancel</Text>
             </TouchableOpacity>
@@ -224,9 +282,9 @@ const styles = StyleSheet.create({
   },
   modalActions: { flexDirection: "row", gap: 10, marginTop: 10 },
   btn: {
-    paddingVertical: 8,
+    paddingVertical: 10,
     borderRadius: 6,
     alignItems: "center",
   },
-  btnText: { color: "white", fontWeight: "600", fontSize: 13 },
+  btnText: { color: "white", fontWeight: "600", fontSize: 14 },
 });

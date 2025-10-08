@@ -1,8 +1,11 @@
+import { UserApi } from "@/api/apis";
+import { Ionicons } from "@expo/vector-icons";
 import { Picker } from "@react-native-picker/picker";
+import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
+import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  Alert,
   Image,
   Modal,
   ScrollView,
@@ -12,148 +15,213 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { User, updateUser } from "../redux/slices/userSlice";
+import { RootState } from "../redux/store";
+
+// 🔹 Cloudinary Config
+const CLOUD_NAME = "dzfqgziwl";
+const UPLOAD_PRESET = "tailorImages";
 
 interface EditProps {
   visible: boolean;
-  tailor: any; // jo tailor edit karna hai
+  tailor: User;
   onClose: () => void;
-  onUpdate: (tailor: any) => void;
 }
 
-export default function Edit({ visible, tailor, onClose, onUpdate }: EditProps) {
-  const [updatedTailor, setUpdatedTailor] = useState(tailor);
+export default function Edit({ visible, tailor, onClose }: EditProps) {
+  const dispatch = useDispatch();
+  const [updatedTailor, setUpdatedTailor] = useState<User>(tailor);
+  const [originalTailor, setOriginalTailor] = useState<User>(tailor);
+  const [loading, setLoading] = useState(false);
+   const { currentUser } = useSelector((state: RootState) => state.users);
 
-  // ✅ jab bhi tailor change ho to state update ho jaye
   useEffect(() => {
-    if (tailor) setUpdatedTailor(tailor);
+    if (tailor) {
+      setUpdatedTailor(tailor);
+      setOriginalTailor(tailor);
+    }
   }, [tailor]);
 
-  // 🔹 Image picker function
+  // 🔹 Upload to Cloudinary
+  const uploadToCloudinary = async (file: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const res = await axios.post(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      formData
+    );
+    return res.data.secure_url;
+  };
+
+  // 🔹 Image Picker
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [4, 4],
-      quality: 1,
+      quality: 0.8,
+      base64: true,
     });
 
-    if (!result.canceled) {
-      setUpdatedTailor((prev: any) => ({ ...prev, Image: result.assets[0].uri }));
+    if (!result.canceled && result.assets.length > 0) {
+      setLoading(true);
+      try {
+        const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+        const imageUrl = await uploadToCloudinary(base64Img);
+        setUpdatedTailor((prev) => ({ ...prev, image: imageUrl }));
+      } catch (err) {
+        console.error("❌ Image upload failed", err);
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
-  const handleUpdateTailor = () => {
-    if (
-      !updatedTailor.Name ||
-      !updatedTailor.Phone ||
-      !updatedTailor.CNIC ||
-      !updatedTailor.Address ||
-      !updatedTailor.Role ||
-      !updatedTailor.Email ||
-      !updatedTailor.Password
-    ) {
-      Alert.alert("Error", "Please fill all fields");
-      return;
-    }
+  // 🔹 Update Handler
+  const handleUpdateTailor = async () => {
+    try {
+      setLoading(true);
 
-    onUpdate(updatedTailor);
-    onClose();
+      // ✅ Compare and send only changed fields
+      const changedFields: any = {};
+      (Object.keys(updatedTailor) as (keyof User)[]).forEach((key) => {
+        if (updatedTailor[key] !== originalTailor[key]) {
+          changedFields[key] = updatedTailor[key];
+        }
+      });
+
+      // ✅ Remove empty or placeholder password
+      if (
+        !changedFields.password ||
+        changedFields.password.trim() === "" ||
+        changedFields.password === "******"
+      ) {
+        delete changedFields.password;
+      }
+
+      // ✅ Always include image if changed
+      if (updatedTailor.image && updatedTailor.image !== originalTailor.image) {
+        changedFields.image = updatedTailor.image;
+      }
+
+      // ✅ If nothing changed, skip request
+      if (Object.keys(changedFields).length === 0) {
+        alert("No changes to update.");
+        setLoading(false);
+        return;
+      }
+
+      // 🔹 Send patch request
+      const res = await axios.patch(
+        UserApi.updateUser(updatedTailor.id),
+        changedFields
+      );
+
+      console.log("✅ User updated:", res.data);
+
+          dispatch(updateUser(res.data));
+     router.push('/Login')
+      onClose();
+    } catch (err: any) {
+      console.error("❌ Update error:", err.response?.data || err.message);
+      alert(err.response?.data?.message || "Failed to update user.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalHeading}>Edit</Text>
+          {/* Profile Image */}
+          <View style={{ position: "relative", alignSelf: "center" }}>
+            {updatedTailor?.image ? (
+              <Image
+                source={{ uri: updatedTailor.image }}
+                style={styles.profileImage}
+              />
+            ) : null}
+            <TouchableOpacity style={styles.cameraIcon} onPress={pickImage}>
+              <Ionicons name="camera" size={22} color="white" />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.modalHeading}>Edit User</Text>
 
           <ScrollView>
             <TextInput
               style={styles.input}
               placeholder="Name"
-              value={updatedTailor?.Name}
+              value={updatedTailor?.name}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, Name: text }))
+                setUpdatedTailor((prev) => ({ ...prev, name: text }))
               }
             />
             <TextInput
               style={styles.input}
               placeholder="Phone"
-              value={updatedTailor?.Phone}
+              value={updatedTailor?.phone}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, Phone: text }))
+                setUpdatedTailor((prev) => ({ ...prev, phone: text }))
               }
             />
             <TextInput
               style={styles.input}
               placeholder="CNIC"
-              value={updatedTailor?.CNIC}
+              value={updatedTailor?.cnic}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, CNIC: text }))
+                setUpdatedTailor((prev) => ({ ...prev, cnic: text }))
               }
             />
             <TextInput
               style={styles.input}
               placeholder="Address"
-              value={updatedTailor?.Address}
+              value={updatedTailor?.address}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, Address: text }))
+                setUpdatedTailor((prev) => ({ ...prev, address: text }))
               }
             />
-
-            {/* 🔹 Email */}
             <TextInput
               style={styles.input}
               placeholder="Email"
               keyboardType="email-address"
-              value={updatedTailor?.Email}
+              value={updatedTailor?.email}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, Email: text }))
+                setUpdatedTailor((prev) => ({ ...prev, email: text }))
               }
             />
 
-            {/* 🔹 Password */}
+          {currentUser?.role === "Admin" && (
+  <View style={styles.pickerWrapper}>
+    <Picker
+      selectedValue={updatedTailor?.role}
+      onValueChange={(value) =>
+        setUpdatedTailor((prev) => ({ ...prev, role: value }))
+      }
+    >
+      <Picker.Item label="Select Role" value="" />
+      <Picker.Item label="Admin" value="Admin" />
+      <Picker.Item label="Tailor" value="Tailor" />
+      <Picker.Item label="Helper" value="Helper" />
+    </Picker>
+  </View>
+)}
+
+
+            {/* Password Field */}
             <TextInput
               style={styles.input}
               placeholder="Password"
               secureTextEntry
-              value={updatedTailor?.Password}
+              value={updatedTailor?.password || ""}
               onChangeText={(text) =>
-                setUpdatedTailor((prev: any) => ({ ...prev, Password: text }))
+                setUpdatedTailor((prev) => ({ ...prev, password: text }))
               }
             />
-
-            {/* 🔹 Role Dropdown */}
-            <View style={styles.pickerWrapper}>
-              <Picker
-                selectedValue={updatedTailor?.Role}
-                onValueChange={(value) =>
-                  setUpdatedTailor((prev: any) => ({ ...prev, Role: value }))
-                }
-              >
-                <Picker.Item label="Select Role" value="" />
-                <Picker.Item label="Admin" value="Admin" />
-                <Picker.Item label="Tailor" value="Tailor" />
-                <Picker.Item label="Helper" value="Helper" />
-              </Picker>
-            </View>
-
-            {/* 🔹 Image Picker Button */}
-            <TouchableOpacity
-              style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
-              onPress={pickImage}
-            >
-              <Text style={styles.btnText}>Change Image</Text>
-            </TouchableOpacity>
-
-            {/* 🔹 Preview Image */}
-            {updatedTailor?.Image ? (
-              <View style={{ alignItems: "center", marginBottom: 10 }}>
-                <Image
-                  source={{ uri: updatedTailor.Image }}
-                  style={{ width: 80, height: 80, borderRadius: 8 }}
-                />
-              </View>
-            ) : null}
           </ScrollView>
 
           {/* Buttons */}
@@ -161,12 +229,17 @@ export default function Edit({ visible, tailor, onClose, onUpdate }: EditProps) 
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: "black", flex: 1 }]}
               onPress={handleUpdateTailor}
+              disabled={loading}
             >
-              <Text style={styles.btnText}>Update</Text>
+              <Text style={styles.btnText}>
+                {loading ? "Updating..." : "Update"}
+              </Text>
             </TouchableOpacity>
+
             <TouchableOpacity
               style={[styles.btn, { backgroundColor: "gray", flex: 1 }]}
               onPress={onClose}
+              disabled={loading}
             >
               <Text style={styles.btnText}>Cancel</Text>
             </TouchableOpacity>
@@ -184,12 +257,30 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0,0,0,0.5)",
     padding: 16,
   },
-  modalContent: { backgroundColor: "white", borderRadius: 8, padding: 20 },
+  modalContent: {
+    backgroundColor: "white",
+    borderRadius: 8,
+    padding: 20,
+  },
   modalHeading: {
     fontSize: 18,
     fontWeight: "bold",
     marginBottom: 12,
     textAlign: "center",
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: 16,
+  },
+  cameraIcon: {
+    position: "absolute",
+    bottom: 10,
+    right: 10,
+    backgroundColor: "black",
+    borderRadius: 20,
+    padding: 6,
   },
   input: {
     borderWidth: 1,
@@ -205,11 +296,19 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
-  modalActions: { flexDirection: "row", gap: 10, marginTop: 10 },
+  modalActions: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 10,
+  },
   btn: {
     paddingVertical: 8,
     borderRadius: 6,
     alignItems: "center",
   },
-  btnText: { color: "white", fontWeight: "600", fontSize: 13 },
+  btnText: {
+    color: "white",
+    fontWeight: "600",
+    fontSize: 13,
+  },
 });

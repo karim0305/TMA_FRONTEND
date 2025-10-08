@@ -1,7 +1,11 @@
 import React from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSelector } from 'react-redux';
+import { RootState } from '../redux/store';
 
 export default function TailorDashboard() {
+const { currentUser } = useSelector((state: RootState) => state.users);
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>Tailor Dashboard</Text>

@@ -1,88 +1,162 @@
-import React, { useState } from "react";
+import { UserApi } from "@/api/apis";
+import { Ionicons } from "@expo/vector-icons";
+import { useNavigation } from "@react-navigation/native";
+import axios from "axios";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 import Add from "../Models/add"; // 👈 Add Admin modal
 import Edit from "../Models/Edit"; // 👈 Edit Admin modal
 import PackageModal from "../Models/package"; // 👈 Package modal
+import { addUser, deleteUser, setUsers, updateUser, User } from "../redux/slices/userSlice";
+import { RootState } from "../redux/store";
+
+
+export type Admin = {
+  id: string;
+  Name: string;
+  Email: string;
+  Phone: string;
+  CNIC: string;
+  Address: string;
+  Role: string;
+  Image: string;
+};
 
 export default function ViewAdmins() {
-  const [admins, setAdmins] = useState<any[]>([
-    {
-      id: "1",
-      Name: "Momin Karim",
-      Phone: "03001234567",
-      CNIC: "35202-1234567-1",
-      Email: "momin@example.com",
-      Address: "Lahore",
-      Role: "Super Admin",
-      Image: "https://via.placeholder.com/100",
-    },
-    {
-      id: "2",
-      Name: "Sara Ahmed",
-      Phone: "03007654321",
-      CNIC: "35201-7654321-9",
-      Email: "sara@example.com",
-      Address: "Karachi",
-      Role: "Admin",
-      Image: "https://via.placeholder.com/100",
-    },
-  ]);
-
   const [modalVisible, setModalVisible] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [packageVisible, setPackageVisible] = useState(false);
   const [selectedAdmin, setSelectedAdmin] = useState<any | null>(null);
+  const navigation = useNavigation();
+
+  
+
+const dispatch = useDispatch();
+const admins = useSelector((state: RootState) => state.users.list);
+
+   useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => setModalVisible(true)}
+        >
+          <Text style={styles.addBtnText}>+</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
+
+    useEffect(() => {
+      GetUser();
+  
+    },[dispatch])
+   const GetUser = async () => {
+  try {
+    const res = await axios.get(UserApi.getUsers);
+    const mapped = res.data.map((u: any, index: number) => ({
+      id: u._id || index.toString(),
+     name: u.name,      // ✅ camelCase
+  email: u.email,
+  phone: u.phone,
+  cnic: u.cnic,
+  address: u.address,
+  role: u.role,
+  image: u.image,
+    }));
+     dispatch(setUsers(mapped));
+    console.log("Mapped Users:", mapped);
+  } catch (err) {
+    console.error("Error fetching users:", err);
+  }
+};
+
+  
+
+
+  // 
 
   const [search, setSearch] = useState("");
 
-  const handleAddAdmin = (newAdmin: any) => {
-    setAdmins((prev) => [
-      ...prev,
-      { ...newAdmin, id: (prev.length + 1).toString() },
-    ]);
-  };
+  const handleAddAdmin = (newAdmin: User) => {
+  dispatch(
+    addUser({
+      ...newAdmin,
+      id: Date.now().toString(), // ya UUID generate karo
+    })
+  );
+};
 
-  const handleUpdateAdmin = (updatedAdmin: any) => {
-    setAdmins((prev) =>
-      prev.map((a) => (a.id === updatedAdmin.id ? updatedAdmin : a))
-    );
-    Alert.alert("Updated", "Admin updated successfully!");
-  };
+const handleUpdateAdmin = (updatedAdmin: User) => {
+  dispatch(updateUser(updatedAdmin));
+  // Alert.alert("Updated", "Admin updated successfully!");
+};
 
-  const handleDelete = (id: string) => {
-    setAdmins((prev) => prev.filter((a) => a.id !== id));
-    Alert.alert("Deleted", "Admin deleted successfully!");
-  };
+const handleDelete = async (id: string) => {
+  try {
+    // 🔥 pehle API call
+    await axios.delete(UserApi.deleteUser(id));
+
+    // ✅ agar success to Redux state update
+    dispatch(deleteUser(id));
+
+    console.log("User deleted successfully!");
+    // Alert.alert("Deleted", "Admin deleted successfully!");
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    // Alert.alert("Error", "Failed to delete user");
+  }
+};
+
 
   // ✅ Filtered list based on search input
-  const filteredAdmins = admins.filter(
-    (a) =>
-      a.Name.toLowerCase().includes(search.toLowerCase()) ||
-      a.Email.toLowerCase().includes(search.toLowerCase()) ||
-      a.Phone.includes(search)
+const filteredAdmins = admins.filter((a) => {
+  const query = search?.toLowerCase() || "";
+  return (
+    a.role?.toLowerCase() === "admin" && (   // ✅ sirf Admins allow
+      (a.name?.toLowerCase() || "").includes(query) ||
+      (a.email?.toLowerCase() || "").includes(query) ||
+      (a.phone || "").includes(search || "")
+    )
   );
+});
+
+
+
+const getRoleColor = (role: string) => {
+  switch (role.toLowerCase()) {
+    case "admin":
+      return "#2563eb"; // blue
+    case "tailor":
+      return "#16a34a"; // green
+    case "customer":
+      return "#f59e0b"; // amber/yellow
+    default:
+      return "#6b7280"; // gray (fallback)
+  }
+};
 
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.headerRow}>
+      {/* <View style={styles.headerRow}>
         <Text style={styles.heading}>All Admins</Text>
         <TouchableOpacity
           style={styles.addBtn}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.addBtnText}>+ Add Admin</Text>
+          <Text style={styles.addBtnText}>+ Add New</Text>
         </TouchableOpacity>
-      </View>
+      </View> */}
 
       {/* 🔍 Search Bar */}
       <TextInput
@@ -100,21 +174,38 @@ export default function ViewAdmins() {
           <View style={styles.card}>
             <View style={styles.row}>
               {/* Image */}
-              <Image source={{ uri: item.Image }} style={styles.avatar} />
+              <Image source={{ uri: item.image }} style={styles.avatar} />
 
               {/* Info */}
-              <View style={styles.info}>
-                <Text style={styles.name}>
-                  {index + 1}. {item.Name}
-                </Text>
-                <Text style={styles.detail}>📞 {item.Phone}</Text>
-                <Text style={styles.detail}>🪪 {item.CNIC}</Text>
-                <Text style={styles.detail}>✉️ {item.Email}</Text>
-                <Text style={styles.detail}>🏠 {item.Address}</Text>
-                <Text style={[styles.badge, { backgroundColor: "#2563eb" }]}>
-                  {item.Role}
-                </Text>
-              </View>
+             <View style={styles.info}>
+  <Text style={styles.name}>
+    {index + 1}. {item.name}
+  </Text>
+
+  <View style={styles.rowDetail}>
+    <Ionicons name="call-outline" size={16} color="#374151" style={styles.icon} />
+    <Text style={styles.detail}>{item.phone}</Text>
+  </View>
+
+  <View style={styles.rowDetail}>
+    <Ionicons name="id-card-outline" size={16} color="#374151" style={styles.icon} />
+    <Text style={styles.detail}>{item.cnic}</Text>
+  </View>
+
+  <View style={styles.rowDetail}>
+    <Ionicons name="mail-outline" size={16} color="#374151" style={styles.icon} />
+    <Text style={styles.detail}>{item.email}</Text>
+  </View>
+
+  <View style={styles.rowDetail}>
+    <Ionicons name="home-outline" size={16} color="#374151" style={styles.icon} />
+    <Text style={styles.detail}>{item.address}</Text>
+  </View>
+
+ <View style={[styles.badge, { backgroundColor: getRoleColor(item.role) }]}>
+  <Text style={{ color: "white", fontSize: 12 }}>{item.role}</Text>
+</View>
+</View>
             </View>
 
             {/* Actions */}
@@ -152,7 +243,7 @@ export default function ViewAdmins() {
           visible={editModalVisible}
           tailor={selectedAdmin} // 👈 still generic
           onClose={() => setEditModalVisible(false)}
-          onUpdate={handleUpdateAdmin}
+           
         />
       )}
 
@@ -183,8 +274,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 8,
+    marginEnd:10,
   },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 14 },
+  addBtnText: { color: "white", fontWeight: "600", fontSize: 14},
 
   // ✅ Search bar style
   searchInput: {
@@ -241,4 +333,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   btnText: { color: "white", fontWeight: "600", fontSize: 13 },
+  rowDetail: {
+  flexDirection: "row",
+  alignItems: "center",
+  marginBottom: 2,
+},
+icon: {
+  marginRight: 6,
+},
 });

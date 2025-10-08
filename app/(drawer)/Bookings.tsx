@@ -1,7 +1,8 @@
-import { useRouter } from "expo-router";
-import React, { useState } from "react";
+import { SuitBookingApi } from "@/api/apis";
+import axios from "axios";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
-  Alert,
   FlatList,
   Image,
   ScrollView,
@@ -9,88 +10,150 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
 import BookingModal from "../Models/bookingsuit"; // 👈 make sure path sahi ho
+import { setBookings, setSuitBookingError, updateSuitBooking } from "../redux/slices/suitBookingSlice";
+import { RootState } from "../redux/store";
 
 export default function Bookings() {
+
+  const { currentUser } = useSelector((state: RootState) => state.users);
+    const params = useLocalSearchParams();
+    const measureId = params.measureId;
+  
+
+
+
   const router = useRouter();
-
-  const [bookings, setBookings] = useState<any[]>([
-    {
-      id: "1",
-      customerName: "Muhammad Ali",
-      bookingDate: "2025-10-01",
-      completionDate: "2025-11-15",
-      stitchingFee: "5000",
-      pictures: [
-        "https://picsum.photos/100/100?random=1",
-        "https://picsum.photos/120/100?random=2",
-      ],
-      status: "pending",
-    },
-  ]);
-
-  const [search, setSearch] = useState("");
-  const [modalVisible, setModalVisible] = useState(false);
-  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
-
-  const statusCycle = ["pending", "progress", "completed", "cancelled"];
-
-  const toggleStatus = (id: string) => {
-    setBookings((prev) =>
-      prev.map((b) =>
-        b.id === id
-          ? { ...b, status: statusCycle[(statusCycle.indexOf(b.status) + 1) % statusCycle.length] }
-          : b
-      )
-    );
-  };
-
-  const handleDelete = (id: string) => {
-    setBookings((prev) => prev.filter((b) => b.id !== id));
-    Alert.alert("Deleted", "Booking deleted successfully!");
-  };
-
-  // ✅ Save new or updated booking
-  const saveBooking = (newBooking: any) => {
-    if (newBooking.id) {
-      // Update existing
-      setBookings((prev) =>
-        prev.map((b) => (b.id === newBooking.id ? newBooking : b))
-      );
-    } else {
-      // Add new
-      setBookings((prev) => [
-        ...prev,
-        { ...newBooking, id: Date.now().toString() },
-      ]);
-    }
-    setModalVisible(false);
-  };
-
-  const filteredBookings = bookings.filter(
-    (b) =>
-      b.customerName.toLowerCase().includes(search.toLowerCase()) ||
-      b.bookingDate.includes(search) ||
-      b.completionDate.includes(search)
-  );
-
-  return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.headerRow}>
-        <Text style={styles.heading}>📑 Suit Bookings</Text>
-        <TouchableOpacity
+   const navigation = useNavigation();
+    const dispatch = useDispatch();
+  const Bookings = useSelector((state: RootState) => state.booking.list);
+    useLayoutEffect(() => {
+      navigation.setOptions({
+        headerRight: () => (
+          <TouchableOpacity
           style={styles.addBtn}
           onPress={() => {
             setSelectedBooking(null); // 👈 for new booking
             setModalVisible(true);
           }}
         >
-          <Text style={styles.addBtnText}>+ New</Text>
+          <Text style={styles.addBtnText}>+</Text>
         </TouchableOpacity>
-      </View>
+        ),
+      });
+    }, [navigation]);
+  
+
+      useEffect(() => {
+      //      console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
+      //  console.log("current  id -----:", currentUser?.id); 
+    GetBooking();
+  }, [dispatch]);
+
+  const GetBooking = async () => {
+    try {
+      const res = await axios.get(SuitBookingApi.getBookings);
+
+      const mapped = res.data.data.map((b: any, index: number) => ({
+        id: b._id || index.toString(),
+        userId: b.userId || null,
+        customerId: b.customerId || null,
+        customerName: b.customerName || "",
+        measurementId: b.measurementId || null,
+        bookingDate: b.bookingDate || "",
+        measurementDate: b.measurementDate || "",
+        completionDate: b.completionDate || "",
+        stitchingFee: b.stitchingFee || 0,
+        status: b.status || "Pending",
+        image: b.image?.[0] || null,
+        createdAt: b.createdAt || "",
+        updatedAt: b.updatedAt || "",
+      }));
+
+      dispatch(setBookings(mapped));
+      console.log("✅ Mapped Bookings:", mapped);
+    } catch (err) {
+      console.error("❌ Error fetching bookings:", err);
+      dispatch(setSuitBookingError("Failed to fetch bookings"));
+    }
+  };
+
+  
+
+  const [search, setSearch] = useState("");
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+
+
+type BookingStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
+const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "#facc15"; // yellow
+      case "In Progress":
+        return "#3b82f6"; // blue
+      case "Completed":
+        return "#16a34a"; // green
+      case "Cancelled":
+        return "#ef4444"; // red
+      default:
+        return "gray";
+    }
+  };
+
+const handleStatus = async (id: string) => {
+  const statusOptions: BookingStatus[] = ["Pending", "In Progress", "Completed", "Cancelled"];
+
+  // Find current booking
+  const booking = Bookings.find((b) => b.id === id);
+  if (!booking) return;
+
+  const currentStatus = booking.status || "Pending";
+  const nextStatus =
+    statusOptions[(statusOptions.indexOf(currentStatus) + 1) % statusOptions.length];
+
+  // ✅ Update Redux instantly (optimistic UI)
+  dispatch(updateSuitBooking({ ...booking, status: nextStatus }));
+
+  try {
+    // ✅ Update backend
+    await axios.patch(SuitBookingApi.updateBooking(id), { status: nextStatus });
+    console.log(`✅ Status updated to: ${nextStatus}`);
+  } catch (err) {
+    console.error("❌ Error updating booking status:", err);
+    // Optional rollback if API fails
+    dispatch(updateSuitBooking({ ...booking, status: currentStatus }));
+  }
+};
+
+
+  const deleteBooking = async (id: string) => {
+    try {
+      await axios.delete(`${SuitBookingApi.deleteBooking(id)}`);
+      const updatedBookings = Bookings.filter((b) => b.id !== id);
+      dispatch(setBookings(updatedBookings));
+      console.log("✅ Booking deleted successfully");
+    } catch (err) {
+      console.error("❌ Error deleting booking:", err);
+    }
+  };
+
+  // ✅ Save new or updated booking
+
+
+const filteredBookings = Bookings.filter(
+  (b) =>
+    (b.customerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+    (b.bookingDate ?? "").includes(search) ||
+    (b.completionDate ?? "").includes(search)
+);
+
+  return (
+    <View style={styles.container}>
+      {/* Header */}
 
       {/* Search */}
       <TextInput
@@ -107,11 +170,27 @@ export default function Bookings() {
         renderItem={({ item, index }) => (
           <View style={styles.card}>
             {/* Pictures */}
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }}>
-              {item.pictures?.map((pic: any, i: any) => (
-                <Image key={i} source={{ uri: pic }} style={styles.avatar} />
-              ))}
-            </ScrollView>
+           {Array.isArray(item.image) && item.image.length > 0 ? (
+  <ScrollView
+    horizontal
+    showsHorizontalScrollIndicator={false}
+    style={{ marginBottom: 10 }}
+  >
+    {item.image.map((pic, i) => (
+      <Image
+        key={i.toString()}
+        source={{ uri: pic }}
+        style={styles.avatar}
+        resizeMode="cover"
+      />
+    ))}
+  </ScrollView>
+) : (
+  <Text style={{ color: "#6b7280", fontStyle: "italic", marginBottom: 10 }}>
+    No images available
+  </Text>
+)}
+
 
             {/* Info */}
             <Text style={styles.name}>{index + 1}. {item.customerName}</Text>
@@ -121,27 +200,21 @@ export default function Bookings() {
 
             {/* Status */}
             <TouchableOpacity
-              style={[styles.statusBtn, statusStyles[item.status]]}
-              onPress={() => toggleStatus(item.id)}
-            >
-              <Text style={styles.statusText}>{item.status.toUpperCase()}</Text>
-            </TouchableOpacity>
+                         style={[
+                           styles.actionBtn,
+                           { backgroundColor: getStatusColor(item.status), flex: 1, marginRight: 5 },
+                         ]}
+                         onPress={() => handleStatus(item.id)}
+                       >
+                         <Text style={styles.actionText}>{item.status}</Text>
+                       </TouchableOpacity>
 
             {/* Actions */}
             <View style={styles.actions}>
-              <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#3b82f6" }]}
-                onPress={() => {
-                  setSelectedBooking(item);
-                  setModalVisible(true);
-                }}
-              >
-                <Text style={styles.actionText}>✏️</Text>
-              </TouchableOpacity>
-
+              
               <TouchableOpacity
                 style={[styles.actionBtn, { backgroundColor: "#ef4444" }]}
-                onPress={() => handleDelete(item.id)}
+                onPress={() => deleteBooking(item.id)}
               >
                 <Text style={styles.actionText}>🗑</Text>
               </TouchableOpacity>
@@ -154,14 +227,13 @@ export default function Bookings() {
       {modalVisible && (
         <BookingModal
   visible={modalVisible}
-  booking={{ bookingDate: "",  measurementDate: "",  completionDate: "", stitchingFee: "" }}
   customers={[{ id: "c1", name: "Ali" }, { id: "c2", name: "Ahmed" }]}
   measurements={{
     c1: [{ id: "m1", date: "2025-09-01" }, { id: "m2", date: "2025-09-15" }],
     c2: [{ id: "m3", date: "2025-09-20" }],
   }}
   onClose={() => setModalVisible(false)}
-  onSave={saveBooking}
+  userId="u123"
 />
       )}
     </View>
