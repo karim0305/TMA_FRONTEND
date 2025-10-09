@@ -196,7 +196,7 @@ export default function ViewCustomers() {
                       color="#374151"
                       style={styles.icon}
                     />
-                    <Text style={styles.detail}>{item.id}</Text>
+                    <Text style={styles.detail}>{item.address}</Text>
                   </View>
                 </View>
               </View>

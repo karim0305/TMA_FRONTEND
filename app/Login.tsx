@@ -50,28 +50,41 @@ const HandleLogin = async (): Promise<void> => {
       await AsyncStorage.setItem("user", JSON.stringify(user));
 
       // ✅ Save to Redux
-    console.log("🟢 Before dispatch:", user);
-dispatch(
-  setCurrentUser({
-    user: {
-    id: user._id,
-    UserId: user.UserId,
-      name: user.name,
-      email: user.email,
-      phone: user.phone,
-      cnic: user.cnic,
-      address: user.address,
-      role: user.role,
-      image: user.image,
-      status: user.status,
-    },
-    token: res.data.access_token,
-  })
-);
-console.log("🟢 After dispatch");
+      dispatch(
+        setCurrentUser({
+          user: {
+            id: user._id,
+            UserId: user.UserId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            cnic: user.cnic,
+            address: user.address,
+            role: user.role,
+            image: user.image,
+            status: user.status,
+          },
+          token: res.data.access_token,
+        })
+      );
 
-      // alert(`Welcome ${user.name}!`);
-      router.replace("/home");
+      // ✅ Check user role and status
+      if (user.role === "Tailor" || user.role === "Customer") {
+        if (user.status === "Active") {
+          if (user.role === "Tailor") {
+            router.replace("/thome");
+          } else if (user.role === "Customer") {
+            router.replace("/chome");
+          }
+        } else {
+          alert("Your account is not active. Please contact the admin.");
+        }
+      } else if (user.role === "Admin") {
+        router.replace("/home");
+      } else {
+        alert("Invalid user role.");
+      }
+
     } else {
       alert("Invalid credentials. Please try again.");
     }
@@ -84,6 +97,7 @@ console.log("🟢 After dispatch");
     setLoading(false);
   }
 };
+
 
 
 

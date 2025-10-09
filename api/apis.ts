@@ -29,6 +29,7 @@ export const MeasurementApi = {
 export const SuitBookingApi = {
   addBooking: `${baseUrl}/suit-bookings`,
   getBookings: `${baseUrl}/suit-bookings`,
+  getBookingswithname: `${baseUrl}/suit-bookings/with-user`,
   updateBooking: (id: string) => `${baseUrl}/suit-bookings/${id}`,
   deleteBooking: (id: string) => `${baseUrl}/suit-bookings/${id}`,
 };

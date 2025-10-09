@@ -82,13 +82,13 @@ export default function Layout() {
                   )}
                   onPress={() => props.navigation.navigate("admins")}
                 />
-                <DrawerItem
+                {/* <DrawerItem
                   label="Bookings"
                   icon={({ color, size }) => (
                     <Ionicons name="calendar-outline" size={size} color={color} />
                   )}
                   onPress={() => props.navigation.navigate("Bookings")}
-                />
+                /> */}
               </>
             )}
 

@@ -1,6 +1,10 @@
 import { SuitBookingApi } from "@/api/apis";
 import axios from "axios";
-import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import {
+  useLocalSearchParams,
+  useNavigation,
+  useRouter,
+} from "expo-router";
 import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   FlatList,
@@ -10,104 +14,102 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import BookingModal from "../Models/bookingsuit"; // 👈 make sure path sahi ho
-import { setBookings, setSuitBookingError, updateSuitBooking } from "../redux/slices/suitBookingSlice";
+import BookingModal from "../Models/bookingsuit";
+import {
+  BookingStatus,
+  setBookings,
+  setSuitBookingError,
+  updateSuitBooking,
+} from "../redux/slices/suitBookingSlice";
 import { RootState } from "../redux/store";
 
 export default function Bookings() {
-
-  const { currentUser } = useSelector((state: RootState) => state.users);
-    const params = useLocalSearchParams();
-    const measureId = params.measureId;
-  
-
-
-
+  const dispatch = useDispatch();
+  const navigation = useNavigation();
   const router = useRouter();
-   const navigation = useNavigation();
-    const dispatch = useDispatch();
+  const params = useLocalSearchParams();
+  const { currentUser } = useSelector((state: RootState) => state.users);
+  console.log(currentUser?.id)
   const Bookings = useSelector((state: RootState) => state.booking.list);
-    useLayoutEffect(() => {
-      navigation.setOptions({
-        headerRight: () => (
-          <TouchableOpacity
-          style={styles.addBtn}
-          onPress={() => {
-            setSelectedBooking(null); // 👈 for new booking
-            setModalVisible(true);
-          }}
-        >
-          <Text style={styles.addBtnText}>+</Text>
-        </TouchableOpacity>
-        ),
-      });
-    }, [navigation]);
-  
-
-      useEffect(() => {
-      //      console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
-      //  console.log("current  id -----:", currentUser?.id); 
-    GetBooking();
-  }, [dispatch]);
-
-  const GetBooking = async () => {
-    try {
-      const res = await axios.get(SuitBookingApi.getBookings);
-
-      const mapped = res.data.data.map((b: any, index: number) => ({
-        id: b._id || index.toString(),
-        userId: b.userId || null,
-        customerId: b.customerId || null,
-        customerName: b.customerName || "",
-        measurementId: b.measurementId || null,
-        bookingDate: b.bookingDate || "",
-        measurementDate: b.measurementDate || "",
-        completionDate: b.completionDate || "",
-        stitchingFee: b.stitchingFee || 0,
-        status: b.status || "Pending",
-        image: b.image?.[0] || null,
-        createdAt: b.createdAt || "",
-        updatedAt: b.updatedAt || "",
-      }));
-
-      dispatch(setBookings(mapped));
-      console.log("✅ Mapped Bookings:", mapped);
-    } catch (err) {
-      console.error("❌ Error fetching bookings:", err);
-      dispatch(setSuitBookingError("Failed to fetch bookings"));
-    }
-  };
-
-  
 
   const [search, setSearch] = useState("");
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
 
+  // ✅ Header button
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          style={styles.addBtn}
+          onPress={() => {
+            setSelectedBooking(null);
+            setModalVisible(true);
+          }}
+        >
+          <Text style={styles.addBtnText}>+</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation]);
 
-type BookingStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
-const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Pending":
-        return "#facc15"; // yellow
-      case "In Progress":
-        return "#3b82f6"; // blue
-      case "Completed":
-        return "#16a34a"; // green
-      case "Cancelled":
-        return "#ef4444"; // red
-      default:
-        return "gray";
+  // ✅ Fetch bookings from API (with user/customer/measurement populated)
+  const GetBookingsWithName = async () => {
+    try {
+      const res = await axios.get(SuitBookingApi.getBookingswithname);
+
+      if (res.data.success) {
+     const mapped = res.data.data.map((b: any, index: number) => ({
+  id: b._id || index.toString(),
+  userId: b.userId?._id || null,
+  userName: b.userId?.name || "",
+  customerId: b.customerId?._id || null,
+  customerName: b.customerId?.name || "",
+  measurementId: b.measurementId?._id || null,
+  measurementDate:
+    b.measurementId?.measurementDate || b.measurementDate || "",
+  bookingDate: b.bookingDate || "",
+  completionDate: b.completionDate || "",
+  stitchingFee: b.stitchingFee || 0,
+  status:
+    ["Pending", "In Progress", "Completed", "Cancelled"].includes(b.status)
+      ? (b.status as "Pending" | "In Progress" | "Completed" | "Cancelled")
+      : "Pending",
+  image: Array.isArray(b.image) ? b.image : [],
+  createdAt: b.createdAt || "",
+  updatedAt: b.updatedAt || "",
+}));
+
+
+        dispatch(setBookings(mapped));
+        console.log("✅ Bookings fetched:", mapped);
+      } else {
+        console.log("⚠️ Failed to fetch:", res.data.message);
+        dispatch(setSuitBookingError(res.data.message));
+      }
+    } catch (err: any) {
+      console.error("❌ Error fetching bookings:", err.message);
+      dispatch(setSuitBookingError("Failed to fetch bookings"));
     }
   };
 
-const handleStatus = async (id: string) => {
-  const statusOptions: BookingStatus[] = ["Pending", "In Progress", "Completed", "Cancelled"];
+  // ✅ Run once on mount
+  useEffect(() => {
+    GetBookingsWithName();
+  }, [dispatch]);
 
-  // Find current booking
+  // ✅ Handle status update
+const handleStatus = async (id: string) => {
+  const statusOptions: BookingStatus[] = [
+    "Pending",
+    "In Progress",
+    "Completed",
+    "Cancelled",
+  ];
+
   const booking = Bookings.find((b) => b.id === id);
   if (!booking) return;
 
@@ -115,103 +117,126 @@ const handleStatus = async (id: string) => {
   const nextStatus =
     statusOptions[(statusOptions.indexOf(currentStatus) + 1) % statusOptions.length];
 
-  // ✅ Update Redux instantly (optimistic UI)
-  dispatch(updateSuitBooking({ ...booking, status: nextStatus }));
+  // ✅ Update Redux instantly (with type-safe status)
+dispatch(updateSuitBooking({ ...booking, status: nextStatus as BookingStatus }));
 
   try {
-    // ✅ Update backend
     await axios.patch(SuitBookingApi.updateBooking(id), { status: nextStatus });
     console.log(`✅ Status updated to: ${nextStatus}`);
   } catch (err) {
     console.error("❌ Error updating booking status:", err);
-    // Optional rollback if API fails
+    // rollback if failed
     dispatch(updateSuitBooking({ ...booking, status: currentStatus }));
   }
 };
 
 
+  // ✅ Delete booking
   const deleteBooking = async (id: string) => {
     try {
-      await axios.delete(`${SuitBookingApi.deleteBooking(id)}`);
-      const updatedBookings = Bookings.filter((b) => b.id !== id);
-      dispatch(setBookings(updatedBookings));
-      console.log("✅ Booking deleted successfully");
+      await axios.delete(SuitBookingApi.deleteBooking(id));
+      const updated = Bookings.filter((b) => b.id !== id);
+      dispatch(setBookings(updated));
+      console.log("✅ Booking deleted");
     } catch (err) {
       console.error("❌ Error deleting booking:", err);
     }
   };
 
-  // ✅ Save new or updated booking
-
-
+  // ✅ Search filter
 const filteredBookings = Bookings.filter(
   (b) =>
-    (b.customerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
-    (b.bookingDate ?? "").includes(search) ||
-    (b.completionDate ?? "").includes(search)
+    b.status !== "Completed" && // 🚫 exclude completed bookings
+    b.userId === currentUser?.id && // ✅ show only current user's bookings
+    (
+      (b.customerName ?? "").toLowerCase().includes(search.toLowerCase()) ||
+      (b.bookingDate ?? "").includes(search) ||
+      (b.completionDate ?? "").includes(search)
+    )
 );
+  // ✅ Color helper
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "Pending":
+        return "#facc15";
+      case "In Progress":
+        return "#3b82f6";
+      case "Completed":
+        return "#16a34a";
+      case "Cancelled":
+        return "#ef4444";
+      default:
+        return "gray";
+    }
+  };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
-
-      {/* Search */}
+      {/* 🔍 Search */}
       <TextInput
         style={styles.searchInput}
-        placeholder="Search by name or date..."
+        placeholder="Search by customer or date..."
         value={search}
         onChangeText={setSearch}
       />
 
-      {/* List */}
+      {/* 📋 Booking List */}
       <FlatList
         data={filteredBookings}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
           <View style={styles.card}>
-            {/* Pictures */}
-           {Array.isArray(item.image) && item.image.length > 0 ? (
-  <ScrollView
-    horizontal
-    showsHorizontalScrollIndicator={false}
-    style={{ marginBottom: 10 }}
-  >
-    {item.image.map((pic, i) => (
-      <Image
-        key={i.toString()}
-        source={{ uri: pic }}
-        style={styles.avatar}
-        resizeMode="cover"
-      />
-    ))}
-  </ScrollView>
-) : (
-  <Text style={{ color: "#6b7280", fontStyle: "italic", marginBottom: 10 }}>
-    No images available
-  </Text>
+            {/* 🖼 Images */}
+            {item.image && item.image.length > 0 ? (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={{ marginBottom: 10 }}
+              >
+               {item.image && item.image.length > 0 && (
+  <Image
+    source={{ uri: item.image[0] }} // ✅ Show only the first image
+    style={styles.avatar}
+    resizeMode="cover"
+  />
 )}
+              </ScrollView>
+            ) : (
+              <Text
+                style={{
+                  color: "#6b7280",
+                  fontStyle: "italic",
+                  marginBottom: 10,
+                }}
+              >
+                No images available
+              </Text>
+            )}
 
-
-            {/* Info */}
-            <Text style={styles.name}>{index + 1}. {item.customerName}</Text>
+            {/* ℹ️ Info */}
+            <Text style={styles.name}>
+              {index + 1}. {item.customerName || "Unknown"}
+            </Text>
+        
             <Text style={styles.detail}>📅 Booking: {item.bookingDate}</Text>
-            <Text style={styles.detail}>✅ Completion: {item.completionDate}</Text>
+            <Text style={styles.detail}>
+              ✅ Completion: {item.completionDate}
+            </Text>
             <Text style={styles.detail}>💵 Fee: Rs {item.stitchingFee}</Text>
 
-            {/* Status */}
+            {/* 🔘 Status */}
             <TouchableOpacity
-                         style={[
-                           styles.actionBtn,
-                           { backgroundColor: getStatusColor(item.status), flex: 1, marginRight: 5 },
-                         ]}
-                         onPress={() => handleStatus(item.id)}
-                       >
-                         <Text style={styles.actionText}>{item.status}</Text>
-                       </TouchableOpacity>
+              style={[
+                styles.statusBtn,
+                { backgroundColor: getStatusColor(item.status) },
+              ]}
+              onPress={() => handleStatus(item.id)}
+            >
+              <Text style={styles.statusText}>{item.status}</Text>
+            </TouchableOpacity>
 
-            {/* Actions */}
+            {/* 🗑 Delete */}
             <View style={styles.actions}>
-              
               <TouchableOpacity
                 style={[styles.actionBtn, { backgroundColor: "#ef4444" }]}
                 onPress={() => deleteBooking(item.id)}
@@ -223,47 +248,30 @@ const filteredBookings = Bookings.filter(
         )}
       />
 
-      {/* ✅ Modal */}
+      {/* ➕ Modal */}
       {modalVisible && (
         <BookingModal
-  visible={modalVisible}
-  customers={[{ id: "c1", name: "Ali" }, { id: "c2", name: "Ahmed" }]}
-  measurements={{
-    c1: [{ id: "m1", date: "2025-09-01" }, { id: "m2", date: "2025-09-15" }],
-    c2: [{ id: "m3", date: "2025-09-20" }],
-  }}
-  onClose={() => setModalVisible(false)}
-  userId="u123"
-/>
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+          userId={currentUser?.id || ""}
+          customers={[{ id: "c1", name: "Ali" }]}
+          measurements={{ c1: [{ id: "m1", date: "2025-09-01" }] }}
+        />
       )}
     </View>
   );
 }
 
-const statusStyles: Record<string, any> = {
-  pending: { backgroundColor: "#f59e0b" },
-  progress: { backgroundColor: "#3b82f6" },
-  completed: { backgroundColor: "#10b981" },
-  cancelled: { backgroundColor: "#ef4444" },
-};
-
-// Styles (same as before)...
+// ✅ Styles
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: "#f3f4f6" },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  heading: { fontSize: 22, fontWeight: "bold", color: "#111827" },
   addBtn: {
     backgroundColor: "#111827",
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 10,
   },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 14 },
+  addBtnText: { color: "white", fontWeight: "600", fontSize: 16 },
   searchInput: {
     borderWidth: 1,
     borderColor: "#d1d5db",

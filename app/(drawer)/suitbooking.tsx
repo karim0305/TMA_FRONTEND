@@ -24,12 +24,13 @@ export default function ViewBookings() {
 
 
    const { currentUser } = useSelector((state: RootState) => state.users);
+
       const params = useLocalSearchParams();
       // const measureId = params.measureId;
       //   const customerId = params.customerId;
       // console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
       // console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
-      // console.log("current  id -----:", currentUser?.id); 
+      console.log("current  id -----:", currentUser?.id); 
   
       
   const [modalVisible, setModalVisible] = useState(false);
@@ -92,35 +93,44 @@ const filtered = dataArray.filter((b: any) => {
     b.measurementId?.toString() ||
     b.MeasureId?.toString();
 
-  console.log("🧩 Comparing IDs →", {
-    bookingCustomerId,
-    bookingMeasureId,
-    paramCustomerId: customerId,
-    paramMeasureId: measureId,
-  });
+  const bookingUserId =
+    b.userId?._id?.toString() ||
+    b.UserId?._id?.toString() ||
+    b.userId?.toString() ||
+    b.UserId?.toString();
+
+  // console.log("🧩 Comparing IDs →", {
+  //   bookingUserId,
+  //   bookingCustomerId,
+  //   bookingMeasureId,
+  //   paramUserId: currentUser?.id,
+  //   paramCustomerId: customerId,
+  //   paramMeasureId: measureId,
+  // });
 
   return (
-    bookingCustomerId === customerId && bookingMeasureId === measureId
+    bookingUserId === currentUser?.id &&
+    bookingCustomerId === customerId &&
+    bookingMeasureId === measureId
   );
 });
 
+const mapped = filtered.map((b: any, index: number) => ({
+  id: b._id || index.toString(),
+  userId: b.userId || null,
+  customerId: b.customerId || null,
+  customerName: b.customerName || "",
+  measurementId: b.measurementId || null,
+  bookingDate: b.bookingDate || "",
+  measurementDate: b.measurementDate || "",
+  completionDate: b.completionDate || "",
+  stitchingFee: b.stitchingFee || 0,
+  status: b.status || "Pending",
+  image: b.image?.[0] || null,
+  createdAt: b.createdAt || "",
+  updatedAt: b.updatedAt || "",
+}));
 
-
-    const mapped = filtered.map((b: any, index: number) => ({
-      id: b._id || index.toString(),
-      userId: b.userId || null,
-      customerId: b.customerId || null,
-      customerName: b.customerName || "",
-      measurementId: b.measurementId || null,
-      bookingDate: b.bookingDate || "",
-      measurementDate: b.measurementDate || "",
-      completionDate: b.completionDate || "",
-      stitchingFee: b.stitchingFee || 0,
-      status: b.status || "Pending",
-      image: b.image?.[0] || null,
-      createdAt: b.createdAt || "",
-      updatedAt: b.updatedAt || "",
-    }));
 
     dispatch(setBookings(mapped));
     console.log("✅ Filtered Bookings:", mapped);

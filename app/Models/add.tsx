@@ -2,7 +2,7 @@ import { UserApi } from "@/api/apis";
 import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -26,11 +26,11 @@ interface AddProps {
 export default function Add({ visible, onClose, onAdd }: AddProps) {
      const { currentUser } = useSelector((state: RootState) => state.users);
   const [loading, setLoading] = useState(false);
-//  useEffect(() => {
-//     if (currentUser?.id || currentUser?.id) {
-//      const UserId === currentUser?.id,
-//     }
-//   }, []);
+useEffect(() => {
+  if (!currentUser) {
+    setNewUser((prev) => ({ ...prev, role: "Tailor" })); // 👈 Default Tailor
+  }
+}, [currentUser]);
 
   const [newUser, setNewUser] = useState({
     UserId: "",
@@ -184,17 +184,20 @@ const handleAddUser = async () => {
          
 
            {/* Show Role Dropdown only if current user is Admin */}
-{currentUser?.role === "Admin" && (
+
+{currentUser?.role === "Admin" ? (
+  // 👑 Admin: Show Password + Full Role Picker
   <View style={styles.pickerWrapper}>
-       <TextInput
-              style={styles.input}
-              placeholder="Password"
-              secureTextEntry
-              value={newUser.password}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, password: text }))
-              }
-            />
+    <TextInput
+      style={styles.input}
+      placeholder="Password"
+      secureTextEntry
+      value={newUser.password}
+      onChangeText={(text) =>
+        setNewUser((prev) => ({ ...prev, password: text }))
+      }
+    />
+
     <Picker
       selectedValue={newUser.role}
       onValueChange={(value) =>
@@ -207,8 +210,23 @@ const handleAddUser = async () => {
       <Picker.Item label="Customer" value="Customer" />
     </Picker>
   </View>
+) : currentUser?.role === "Tailor" ? (
+  // ✂️ Tailor logged in → Hide both password and role picker
+  null
+) : (
+  // 🆕 No currentUser (Sign-up)
+  <View style={styles.pickerWrapper}>
+    <Picker
+      selectedValue={newUser.role}
+      onValueChange={(value) =>
+        setNewUser((prev) => ({ ...prev, role: value }))
+      }
+    >
+      <Picker.Item label="Tailor" value="Tailor" />
+    
+    </Picker>
+  </View>
 )}
-
 
             <TouchableOpacity
         style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
