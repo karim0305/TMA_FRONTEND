@@ -12,6 +12,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useDispatch } from "react-redux";
 import Add from "./Models/add";
 import { addUser, setCurrentUser, setLoading, User } from "./redux/slices/userSlice";
@@ -28,80 +29,114 @@ export type user = {
   Image: string;
 };
 export default function App() {
-const dispatch = useDispatch();
+  const dispatch = useDispatch();
 
 
-const HandleLogin = async (): Promise<void> => {
-  if (!email || !password) {
-    alert("Please enter both email and password.");
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const res = await axios.post(AuthApi.Login, { email, password });
-
-    if (res.data.access_token) {
-      const user = res.data.user;
-
-      // ✅ Save to AsyncStorage
-      await AsyncStorage.setItem("token", res.data.access_token);
-      await AsyncStorage.setItem("user", JSON.stringify(user));
-
-      // ✅ Save to Redux
-      dispatch(
-        setCurrentUser({
-          user: {
-            id: user._id,
-            UserId: user.UserId,
-            name: user.name,
-            email: user.email,
-            phone: user.phone,
-            cnic: user.cnic,
-            address: user.address,
-            role: user.role,
-            image: user.image,
-            status: user.status,
-          },
-          token: res.data.access_token,
-        })
-      );
-
-      // ✅ Check user role and status
-      if (user.role === "Tailor" || user.role === "Customer") {
-        if (user.status === "Active") {
-          if (user.role === "Tailor") {
-            router.replace("/thome");
-          } else if (user.role === "Customer") {
-            router.replace("/chome");
-          }
-        } else {
-          alert("Your account is not active. Please contact the admin.");
-        }
-      } else if (user.role === "Admin") {
-        router.replace("/home");
-      } else {
-        alert("Invalid user role.");
-      }
-
-    } else {
-      alert("Invalid credentials. Please try again.");
+  const HandleLogin = async (): Promise<void> => {
+    if (!email || !password) {
+      Toast.show({
+        type: "error", // 'success' | 'error' | 'info'
+        text1: "Please enter both email and password.",
+      });
+      return;
     }
-  } catch (error: any) {
-    console.error("❌ Login Error:", error.response?.data || error.message);
-    alert(
-      error.response?.data?.message || "Something went wrong. Please try again."
-    );
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      setLoading(true);
+
+      const res = await axios.post(AuthApi.Login, { email, password });
+
+      if (res.data.access_token) {
+        const user = res.data.user;
+
+        // ✅ Save to AsyncStorage
+        await AsyncStorage.setItem("token", res.data.access_token);
+        await AsyncStorage.setItem("user", JSON.stringify(user));
+
+        // ✅ Save to Redux
+        dispatch(
+          setCurrentUser({
+            user: {
+              id: user._id,
+              UserId: user.UserId,
+              name: user.name,
+              email: user.email,
+              phone: user.phone,
+              cnic: user.cnic,
+              address: user.address,
+              role: user.role,
+              image: user.image,
+              status: user.status,
+            },
+            token: res.data.access_token,
+          })
+        );
+
+        // ✅ Check user role and status
+        if (user.role === "Tailor" || user.role === "Customer") {
+          if (user.status === "Active") {
+            if (user.role === "Tailor") {
+              Toast.show({
+                type: "success",
+                text1: "Login successful! 🎉",
+                text2: "Welcome back, John!",
+              });
+              router.replace("/thome");
+            } else if (user.role === "Customer") {
+              Toast.show({
+                type: "success",
+                text1: "Login successful! 🎉",
+                text2: "Welcome back, John!",
+              });
+              router.replace("/chome");
+            }
+          } else {
+            Toast.show({
+              type: "error",
+              text1: "Your Account is Not Activated",
+              text2: "Contact Administration 0300902992093",
+              position: "top",
+              visibilityTime: 3000,
+            });
+          }
+        } else if (user.role === "Admin") {
+          Toast.show({
+            type: "success",
+            text1: "Login successful! 🎉",
+            text2: "Welcome back, John!",
+          });
+          router.replace("/home");
+        } else {
+          alert("Invalid user role.");
+        }
+
+      } else {
+
+        Toast.show({
+          type: "error",
+          text1: "Invalid credentials. Please try again..",
+          position: "top",
+          visibilityTime: 3000,
+        });
+      }
+    } catch (error: any) {
+      console.error("❌ Login Error:", error.response?.data || error.message);
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong. Please try again",
+        position: "top",
+        visibilityTime: 3000,
+      });
+
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
 
 
-   const handleAddAdmin = (newAdmin: User) => {
+  const handleAddAdmin = (newAdmin: User) => {
     dispatch(
       addUser({
         ...newAdmin,
@@ -141,7 +176,7 @@ const HandleLogin = async (): Promise<void> => {
   }, []);
 
 
-    const [selectedRole, setSelectedRole] = useState("Customer");
+  const [selectedRole, setSelectedRole] = useState("Customer");
   return (
     <View>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -292,11 +327,11 @@ const HandleLogin = async (): Promise<void> => {
         </View>
       </Modal> */}
 
-       <Add
-              visible={isSignUpVisible}
-              onClose={() => setIsSignUpVisible(false)}
-              onAdd={handleAddAdmin}
-            />
+      <Add
+        visible={isSignUpVisible}
+        onClose={() => setIsSignUpVisible(false)}
+        onAdd={handleAddAdmin}
+      />
     </View>
   );
 }
@@ -361,7 +396,7 @@ const styles = StyleSheet.create({
     padding: 20,
     borderRadius: 12,
   },
- 
+
 
 
 

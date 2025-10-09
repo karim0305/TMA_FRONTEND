@@ -96,12 +96,14 @@ export default function Layout() {
             {currentUser?.role === "Tailor" && (
               <>
                 <DrawerItem
-                  label="Tailor Home"
+                  label="Home"
                   icon={({ color, size }) => (
                     <Ionicons name="home-outline" size={size} color={color} />
                   )}
                   onPress={() => props.navigation.navigate("thome")}
                 />
+
+
                 <DrawerItem
                   label="Profile"
                   icon={({ color, size }) => (
@@ -130,7 +132,7 @@ export default function Layout() {
             {currentUser?.role === "Customer" && (
               <>
                 <DrawerItem
-                  label="Customer Home"
+                  label="Home"
                   icon={({ color, size }) => (
                     <Ionicons name="home-outline" size={size} color={color} />
                   )}
@@ -147,14 +149,17 @@ export default function Layout() {
             )}
 
             {/* Common Logout (for all roles) */}
-            <DrawerItem
-              label="Logout"
-              icon={({ color, size }) => (
-                <Ionicons name="log-out-outline" size={size} color="red" />
-              )}
-              labelStyle={{ color: "red" }}
-              onPress={handleLogout}
-            />
+           {/* 🚀 Fixed Logout at bottom */}
+      <View style={{ borderTopWidth: 1, borderTopColor: "#ccc" }}>
+        <DrawerItem
+          label="Logout"
+          icon={({ size }) => (
+            <Ionicons name="log-out-outline" size={size} color="red" />
+          )}
+          labelStyle={{ color: "red" }}
+          onPress={handleLogout}
+        />
+      </View>
           </DrawerContentScrollView>
         )}
 
@@ -169,19 +174,21 @@ export default function Layout() {
           drawerLabelStyle: { fontSize: 16 },
           drawerStyle: { width: 240 },
           // ✅ Show Hamburger on "home", Back on others
-          headerLeft: () =>
-            route.name === "home" ? (
-              <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 10 }}>
-                <Ionicons name="menu" size={26} color="black" />
-              </TouchableOpacity>
-            ) : (
-            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
-  <Ionicons name="arrow-back" size={24} color="black" />
-</TouchableOpacity>
-            ),
+      headerLeft: () =>
+  ["home", "thome", "chome"].includes(route.name) ? (
+    <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 10 }}>
+      <Ionicons name="menu" size={26} color="black" />
+    </TouchableOpacity>
+  ) : (
+    <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
+      <Ionicons name="arrow-back" size={24} color="black" />
+    </TouchableOpacity>
+  ),
         })}
       >
         <Drawer.Screen name="home" options={{ title: "Dashboard" }} />
+        <Drawer.Screen name="thome" options={{ title: "Dashboard" }} />
+        <Drawer.Screen name="chome" options={{ title: "Dashboard" }} />
         <Drawer.Screen name="profile" options={{ title: "My Profile" }} />
         <Drawer.Screen name="viewtailor" options={{ title: "All Tailors" }} />
         <Drawer.Screen name="viewcustomer" options={{ title: "All Customers" }} />

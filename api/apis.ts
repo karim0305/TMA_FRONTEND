@@ -1,5 +1,6 @@
 //const baseUrl = process.env.NEXT_PUBLIC_BASE_URL as string;
-const baseUrl = "http://localhost:3010/tmaapi";
+//baseapivercel = "https://tma-backend-liart.vercel.app/tmaapi"
+const baseUrl = "https://tma-backend-liart.vercel.app/tmaapi";
 
 
 
