@@ -23,8 +23,10 @@ import { RootState } from "../redux/store";
 export default function ViewMeasurements() {
   const { currentUser } = useSelector((state: RootState) => state.users);
  const params = useLocalSearchParams();
-  console.log("Params:", params); // Should log { customerId: "..." }
+ // console.log("Params:", params); // Should log { customerId: "..." }
   const customerId = params.customerId;
+
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedMeasurement, setSelectedMeasurement] = useState<any | null>(null);
   const dispatch = useDispatch();
@@ -172,11 +174,11 @@ const filteredMeasurements = measurements.filter((m) => {
                   </Text>
                 ))}
               </View>
-
+  {/* onPress={() => router.push(`/suitbooking?measureId=${item._id}`)} */}
               <View style={styles.actionRow}>
                 <TouchableOpacity
                   style={[styles.actionBtn, { backgroundColor: "#22c55e" }]}
-                  onPress={() => router.push(`/suitbooking?measureId=${item._id}`)}
+                  onPress={() => router.push(`/suitbooking?measureId=${item._id}&customerId=${typeof item.customerId === "object" ? item.customerId._id : item.customerId}`)}
                 >
                   <Text style={styles.actionText}>Suit Booking</Text>
                 </TouchableOpacity>

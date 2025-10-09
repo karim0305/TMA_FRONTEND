@@ -1,9 +1,8 @@
 import { SuitBookingApi } from "@/api/apis";
-import { Picker } from "@react-native-picker/picker";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
@@ -39,24 +38,34 @@ export default function BookingModal({
 
       const { currentUser } = useSelector((state: RootState) => state.users);
       const params = useLocalSearchParams();
-      const measureId = params.measureId;
-        const customerId = params.customerId;
-      // console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
-      // console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
-      // console.log("current  id -----:", currentUser?.id); 
+      //   // const measureId = params.measureId;
+      //     const customerId = params.customerId;
+      //   // console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
+      //   // console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
+      //   // console.log("current  id -----:", currentUser?.id); 
   
   const dispatch = useDispatch<AppDispatch>();
   const [bookingDate, setBookingDate] = useState("");
   const [completionDate, setCompletionDate] = useState("");
   const [stitchingFee, setStitchingFee] = useState("");
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [selectedCustomer, setSelectedCustomer] = useState<string | null>(null);
-  const [selectedMeasurement, setSelectedMeasurement] = useState<string | null>(
-    null
-  );
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+
+// ✅ Watch for changes in route params
+const [measureId, setMeasureId] = useState<string | null>(null);
+const [customerId, setCustomerId] = useState<string | null>(null);
+
+useEffect(() => {
+  if (params.measureId) {
+    setMeasureId(params.measureId as string);
+  }
+  if (params.customerId) {
+    setCustomerId(params.customerId as string);
+  }
+  console.log("🧾 measureId:", params.measureId);
+  console.log("👤 customerId:", params.customerId);
+}, [params.measureId, params.customerId]);
   
 const CLOUD_NAME = "dzfqgziwl";
 const UPLOAD_PRESET = "tailorImages";
@@ -125,9 +134,7 @@ const handleSaveBooking = async () => {
     if (response.data.success) {
       dispatch(addSuitBooking(response.data.data));
       console.log("✅ Booking Added Successfully");
-       setSelectedUser("");
-      setSelectedCustomer("");
-      setSelectedMeasurement("");
+  
       setBookingDate("");
       setCompletionDate("");
       setStitchingFee("");
@@ -149,9 +156,9 @@ const handleSaveBooking = async () => {
         <ScrollView style={styles.container}>
           <Text style={styles.title}>Add New Booking</Text>
 
-          {/* Customer Dropdown */}
+          Customer Dropdown
           <Text style={styles.label}>Select Customer</Text>
-          <View style={styles.dropdown}>
+          {/* <View style={styles.dropdown}>
             <Picker
               selectedValue={selectedCustomer}
               onValueChange={(val) => {
@@ -164,10 +171,10 @@ const handleSaveBooking = async () => {
                 <Picker.Item key={c.id} label={c.name} value={c.id} />
               ))}
             </Picker>
-          </View>
+          </View> */}
 
           {/* Measurement Dropdown */}
-          {selectedCustomer && (
+          {/* {selectedCustomer && (
             <>
               <Text style={styles.label}>Select Measurement</Text>
               <View style={styles.dropdown}>
@@ -186,7 +193,7 @@ const handleSaveBooking = async () => {
                 </Picker>
               </View>
             </>
-          )}
+          )} */}
 
           {/* Input Fields */}
           <TextInput

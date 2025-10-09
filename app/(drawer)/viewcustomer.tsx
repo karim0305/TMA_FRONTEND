@@ -224,6 +224,7 @@ export default function ViewCustomers() {
                   style={[styles.btn, { backgroundColor: "#3b82f6" }]}
                   onPress={() => router.push(`/viewmeasurments?customerId=${item.id}`)}
                 >
+                  
                   <Text style={styles.btnText}>📏 Measure</Text>
                 </TouchableOpacity>
               </View>

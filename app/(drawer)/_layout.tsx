@@ -175,9 +175,9 @@ export default function Layout() {
                 <Ionicons name="menu" size={26} color="black" />
               </TouchableOpacity>
             ) : (
-              <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 10 }}>
-                <Ionicons name="arrow-back" size={24} color="black" />
-              </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
+  <Ionicons name="arrow-back" size={24} color="black" />
+</TouchableOpacity>
             ),
         })}
       >

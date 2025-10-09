@@ -25,11 +25,11 @@ export default function ViewBookings() {
 
    const { currentUser } = useSelector((state: RootState) => state.users);
       const params = useLocalSearchParams();
-      const measureId = params.measureId;
-        const customerId = params.customerId;
-      console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
-      console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
-      console.log("current  id -----:", currentUser?.id); 
+      // const measureId = params.measureId;
+      //   const customerId = params.customerId;
+      // console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
+      // console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
+      // console.log("current  id -----:", currentUser?.id); 
   
       
   const [modalVisible, setModalVisible] = useState(false);
@@ -52,38 +52,83 @@ export default function ViewBookings() {
       ),
     });
   }, [navigation]);
+  const [customerId, setCustomerId] = useState<string | null>(null);
+const [measureId, setMeasureId] = useState<string | null>(null);
 
-  useEffect(() => {
+useEffect(() => {
+  if (params?.measureId) setMeasureId(params.measureId.toString());
+  if (params?.customerId) setCustomerId(params.customerId.toString());
+
+  console.log("🧾 measureId---:", params.measureId);
+  console.log("👤 customerId------", params.customerId);
+}, [params]);
+
+useEffect(() => {
+  if (customerId && measureId) {
+          dispatch(setBookings([]));
     GetBooking();
-  }, [dispatch]);
+  }
+}, [customerId, measureId]);
 
-  const GetBooking = async () => {
-    try {
-      const res = await axios.get(SuitBookingApi.getBookings);
+const GetBooking = async () => {
+  try {
+    const res = await axios.get(SuitBookingApi.getBookings);
+    console.log("📦 Full API Response:", res.data);
 
-      const mapped = res.data.data.map((b: any, index: number) => ({
-        id: b._id || index.toString(),
-        userId: b.userId || null,
-        customerId: b.customerId || null,
-        customerName: b.customerName || "",
-        measurementId: b.measurementId || null,
-        bookingDate: b.bookingDate || "",
-        measurementDate: b.measurementDate || "",
-        completionDate: b.completionDate || "",
-        stitchingFee: b.stitchingFee || 0,
-        status: b.status || "Pending",
-        image: b.image?.[0] || null,
-        createdAt: b.createdAt || "",
-        updatedAt: b.updatedAt || "",
-      }));
+    const dataArray = Array.isArray(res.data) ? res.data : res.data.data || [];
 
-      dispatch(setBookings(mapped));
-      console.log("✅ Mapped Bookings:", mapped);
-    } catch (err) {
-      console.error("❌ Error fetching bookings:", err);
-      dispatch(setSuitBookingError("Failed to fetch bookings"));
-    }
-  };
+    // ✅ Filter by converting everything to string (safe comparison)
+   // ✅ Filter by converting everything to string and checking both possible key names
+const filtered = dataArray.filter((b: any) => {
+  const bookingCustomerId =
+    b.customerId?._id?.toString() ||
+    b.CustomerId?._id?.toString() ||
+    b.customerId?.toString() ||
+    b.CustomerId?.toString();
+
+  const bookingMeasureId =
+    b.measurementId?._id?.toString() ||
+    b.MeasureId?._id?.toString() ||
+    b.measurementId?.toString() ||
+    b.MeasureId?.toString();
+
+  console.log("🧩 Comparing IDs →", {
+    bookingCustomerId,
+    bookingMeasureId,
+    paramCustomerId: customerId,
+    paramMeasureId: measureId,
+  });
+
+  return (
+    bookingCustomerId === customerId && bookingMeasureId === measureId
+  );
+});
+
+
+
+    const mapped = filtered.map((b: any, index: number) => ({
+      id: b._id || index.toString(),
+      userId: b.userId || null,
+      customerId: b.customerId || null,
+      customerName: b.customerName || "",
+      measurementId: b.measurementId || null,
+      bookingDate: b.bookingDate || "",
+      measurementDate: b.measurementDate || "",
+      completionDate: b.completionDate || "",
+      stitchingFee: b.stitchingFee || 0,
+      status: b.status || "Pending",
+      image: b.image?.[0] || null,
+      createdAt: b.createdAt || "",
+      updatedAt: b.updatedAt || "",
+    }));
+
+    dispatch(setBookings(mapped));
+    console.log("✅ Filtered Bookings:", mapped);
+  } catch (err) {
+    console.error("❌ Error fetching bookings:", err);
+    dispatch(setSuitBookingError("Failed to fetch bookings"));
+  }
+};
 
   const openAddModal = () => {
     setEditIndex(null);
@@ -164,13 +209,17 @@ const handleStatus = async (id: string) => {
 
       {Bookings.map((b: any, index: any) => (
         <View key={b.id} style={styles.card}>
-          {b.image ? (
-            <Image source={{ uri: b.image }} style={styles.image} resizeMode="cover" />
-          ) : (
-            <Text style={{ fontStyle: "italic", color: "#6b7280", marginTop: 5 }}>
-              No image available
-            </Text>
-          )}
+          {b.image && b.image.length > 0 ? (
+  <Image
+    source={{ uri: b.image[0] }} // 👈 use first image
+    style={styles.image}
+    resizeMode="cover"
+  />
+) : (
+  <Text style={{ fontStyle: "italic", color: "#6b7280", marginTop: 5 }}>
+    No image available
+  </Text>
+)}
 
           <Text style={styles.cardText}>Booking Date: {b.bookingDate}</Text>
           <Text style={styles.cardText}>Measurement Date: {b.measurementDate}</Text>
