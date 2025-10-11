@@ -7,13 +7,15 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Layout() {
   const { currentUser } = useSelector((state: RootState) => state.users);
   const dispatch = useDispatch();
   const handleLogout = async () => {
-    // await AsyncStorage.removeItem("token");
-    // await AsyncStorage.removeItem("user");
+
+      await AsyncStorage.removeItem("token");
+  await AsyncStorage.removeItem("user");
     dispatch(logoutUser());
     router.replace("/Login"); // Go back to login
   };

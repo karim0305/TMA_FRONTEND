@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   FlatList,
   Image,
   StyleSheet,
@@ -15,7 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import Add from "../Models/add";
 import Edit from "../Models/Edit";
 import PackageModal from "../Models/package";
-import { addUser, deleteUser, setUsers, updateUser, User } from "../redux/slices/userSlice";
+import { addUser, deleteUser, setError, setLoading, setUsers, updateUser, User } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
 
 export default function ViewTailors() {
@@ -25,6 +26,7 @@ export default function ViewTailors() {
   const [selectedTailor, setSelectedTailor] = useState<any | null>(null);
 
   const [search, setSearch] = useState("");
+  const [loadingId, setLoadingId] = useState<string | null>(null);
 
   const dispatch = useDispatch();
   const users = useSelector((state: RootState) => state.users.list);
@@ -49,6 +51,7 @@ export default function ViewTailors() {
         packageType: u.packageType || "N/A",
         fee: u.fee || "0",
         tillDate: u.tillDate || "-",
+          status: u.status || "Inactive", 
       }));
       dispatch(setUsers(mapped));
       console.log("Mapped Tailors:", mapped);
@@ -56,6 +59,9 @@ export default function ViewTailors() {
       console.error("Error fetching tailors:", err);
     }
   };
+
+
+  
 
   // ✅ Filter only Tailors
   const filteredTailors = users.filter((t) => {
@@ -90,6 +96,33 @@ export default function ViewTailors() {
       console.log("Tailor deleted successfully!");
     } catch (error) {
       console.error("Error deleting tailor:", error);
+    }
+  };
+
+
+
+
+  const handleToggleStatus = async (tailor: User) => {
+    const newStatus = tailor.status === "Active" ? "Inactive" : "Active";
+    const userId = tailor._id || tailor.id;
+
+    try {
+       setLoadingId(userId);
+      dispatch(setLoading(true));
+
+      const response = await axios.patch(UserApi.updateUser(userId), {
+        status: newStatus,
+      });
+
+      console.log("✅ Status updated:", response.data);
+
+      dispatch(updateUser({ ...tailor, status: newStatus }));
+    } catch (error) {
+      console.error("❌ Failed to update status:", error);
+      dispatch(setError("Failed to update status"));
+    } finally {
+       setLoadingId(null);
+      dispatch(setLoading(false));
     }
   };
 
@@ -132,6 +165,38 @@ export default function ViewTailors() {
                   <Ionicons name="home-outline" size={16} color="#374151" style={styles.icon} />
                   <Text style={styles.detail}>{item.address}</Text>
                 </View>
+<View
+  style={{
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+  }}
+>
+  {/* 🟢 Clickable Dot */}
+  <TouchableOpacity
+    onPress={() => handleToggleStatus(item)}
+    activeOpacity={0.7}
+    style={{
+      width: 16,
+      height: 16,
+      borderRadius: 8,
+      backgroundColor: item.status === "Active" ? "#22c55e" : "#ef4444",
+      justifyContent: "center",
+      alignItems: "center",
+      marginRight: 8,
+    }}
+  >
+    {loadingId === item.id && (
+      <ActivityIndicator color="#fff" size="small" />
+    )}
+  </TouchableOpacity>
+
+  {/* 📄 Status Text (not clickable) */}
+  <Text style={{ fontSize: 14, fontWeight: "500", color: "#111827" }}>
+    {item.status === "Active" ? "Active" : "Inactive"}
+  </Text>
+</View>
 
                 {/* Package Info */}
                 {/* <Text style={styles.detail}>📦 {item.packageType}</Text>
@@ -159,6 +224,8 @@ export default function ViewTailors() {
                 <Text style={styles.btnText}>🗑 Delete</Text>
               </TouchableOpacity>
 
+
+              
               <TouchableOpacity
                 style={[styles.btn, { backgroundColor: "#3b82f6" }]}
                 onPress={() => {

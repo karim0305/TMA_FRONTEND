@@ -31,107 +31,154 @@ export type user = {
 export default function App() {
   const dispatch = useDispatch();
 
+const HandleLogin = async (): Promise<void> => {
+  if (!email || !password) {
+    Toast.show({
+      type: "info",
+      text1: "Please enter both email and password.",
+      position: "top",
+      visibilityTime: 3000,
+    });
+    return;
+  }
 
-  const HandleLogin = async (): Promise<void> => {
-    if (!email || !password) {
-      Toast.show({
-        type: "error", // 'success' | 'error' | 'info'
-        text1: "Please enter both email and password.",
-      });
-      return;
-    }
+  try {
+    setLoading(true);
 
-    try {
-      setLoading(true);
+    const res = await axios.post(AuthApi.Login, { email, password });
 
-      const res = await axios.post(AuthApi.Login, { email, password });
+    if (res.data.access_token) {
+      const user = res.data.user;
 
-      if (res.data.access_token) {
-        const user = res.data.user;
+      // ✅ Save to AsyncStorage
+      await AsyncStorage.setItem("token", res.data.access_token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
 
-        // ✅ Save to AsyncStorage
-        await AsyncStorage.setItem("token", res.data.access_token);
-        await AsyncStorage.setItem("user", JSON.stringify(user));
+      // ✅ Save to Redux
+      dispatch(
+        setCurrentUser({
+          user: {
+            id: user._id,
+            UserId: user.UserId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            cnic: user.cnic,
+            address: user.address,
+            role: user.role,
+            image: user.image,
+            status: user.status,
+          },
+          token: res.data.access_token,
+        })
+      );
 
-        // ✅ Save to Redux
-        dispatch(
-          setCurrentUser({
-            user: {
-              id: user._id,
-              UserId: user.UserId,
-              name: user.name,
-              email: user.email,
-              phone: user.phone,
-              cnic: user.cnic,
-              address: user.address,
-              role: user.role,
-              image: user.image,
-              status: user.status,
-            },
-            token: res.data.access_token,
-          })
-        );
-
-        // ✅ Check user role and status
-        if (user.role === "Tailor" || user.role === "Customer") {
-          if (user.status === "Active") {
-            if (user.role === "Tailor") {
-              Toast.show({
-                type: "success",
-                text1: "Login successful! 🎉",
-                text2: "Welcome back, John!",
-              });
-              router.replace("/thome");
-            } else if (user.role === "Customer") {
-              Toast.show({
-                type: "success",
-                text1: "Login successful! 🎉",
-                text2: "Welcome back, John!",
-              });
-              router.replace("/chome");
-            }
-          } else {
-            Toast.show({
-              type: "error",
-              text1: "Your Account is Not Activated",
-              text2: "Contact Administration 0300902992093",
-              position: "top",
-              visibilityTime: 3000,
-            });
-          }
-        } else if (user.role === "Admin") {
+      // ✅ Check user role and status
+      if (user.role === "Tailor" || user.role === "Customer") {
+        if (user.status === "Active") {
           Toast.show({
             type: "success",
             text1: "Login successful! 🎉",
-            text2: "Welcome back, John!",
+            text2: `Welcome back, ${user.name}!`,
+            position: "top",
+            visibilityTime: 3000,
           });
-          router.replace("/home");
+
+          if (user.role === "Tailor") {
+            router.replace("/thome");
+          } else {
+            router.replace("/chome");
+          }
         } else {
-          alert("Invalid user role.");
+          Toast.show({
+            type: "error",
+            text1: "Your account is not activated.",
+            text2: "Contact Administration: 0300-902992093",
+            position: "top",
+            visibilityTime: 3000,
+          });
         }
-
+      } else if (user.role === "Admin") {
+        Toast.show({
+          type: "success",
+          text1: "Login successful! 🎉",
+          text2: `Welcome back, ${user.name}!`,
+          position: "top",
+          visibilityTime: 3000,
+        });
+        router.replace("/home");
       } else {
-
         Toast.show({
           type: "error",
-          text1: "Invalid credentials. Please try again..",
+          text1: "Invalid user role.",
           position: "top",
           visibilityTime: 3000,
         });
       }
-    } catch (error: any) {
-      console.error("❌ Login Error:", error.response?.data || error.message);
+    } else {
+      // 🧩 Handle known backend errors (user not found or invalid password)
+      const errorMsg = res.data.message?.toLowerCase() || "";
+
+      if (errorMsg.includes("user not found") || errorMsg.includes("not exist")) {
+        Toast.show({
+          type: "error",
+          text1: "User not exist.",
+          text2: "Please sign up to continue.",
+          position: "top",
+          visibilityTime: 3000,
+        });
+      } else if (errorMsg.includes("invalid password") || errorMsg.includes("wrong password")) {
+        Toast.show({
+          type: "error",
+          text1: "Invalid password.",
+          text2: "Please check your password and try again.",
+          position: "top",
+          visibilityTime: 3000,
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Invalid credentials.",
+          text2: "Please try again.",
+          position: "top",
+          visibilityTime: 3000,
+        });
+      }
+    }
+  } catch (error: any) {
+    console.error("❌ Login Error:", error.response?.data || error.message);
+
+    const msg = error.response?.data?.message?.toLowerCase() || "";
+
+    if (msg.includes("user not found") || msg.includes("not exist")) {
       Toast.show({
         type: "error",
-        text1: "Something went wrong. Please try again",
+        text1: "User not exist.",
+        text2: "Please sign up to continue.",
         position: "top",
         visibilityTime: 3000,
       });
-
-    } finally {
-      setLoading(false);
+    } else if (msg.includes("invalid password") || msg.includes("wrong password")) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid password.",
+        text2: "Please check your password and try again.",
+        position: "top",
+        visibilityTime: 3000,
+      });
+    } else {
+      Toast.show({
+        type: "error",
+        text1: "Something went wrong.",
+        text2: "Please try again later.",
+        position: "top",
+        visibilityTime: 3000,
+      });
     }
-  };
+  } finally {
+    setLoading(false);
+  }
+};
 
 
 

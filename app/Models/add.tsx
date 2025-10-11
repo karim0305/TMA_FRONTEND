@@ -39,6 +39,7 @@ useEffect(() => {
     cnic: "",
     address: "",
     role: "",
+    status:"Inactive",
     email: "",
     password: "",
     image: "", // local uri before upload
@@ -99,7 +100,8 @@ const handleAddUser = async () => {
       ...newUser,
       // newUser.image already has the Cloudinary URL
       image: newUser.image,
-      UserId:currentUser?.id
+      UserId:currentUser?.id,
+       status: currentUser ? "Active" : "Inactive",  
     };
 
     const res = await axios.post(UserApi.addUser, userPayload);

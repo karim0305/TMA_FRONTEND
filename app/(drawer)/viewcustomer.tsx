@@ -54,6 +54,8 @@ export default function ViewCustomers() {
     });
   }, [navigation]);
 
+  
+
   // ✅ Fetch customers when current user is available
   useEffect(() => {
     if (currentUser?.id) {
@@ -70,7 +72,8 @@ export default function ViewCustomers() {
       setLoading(true);
       const res = await axios.get(UserApi.getUsers);
       const mapped = res.data.map((u: any, index: number) => ({
-        id: u._id || index.toString(),
+        _id: u._id,          // ✅ keep MongoDB _id
+        id: u._id,           // optional – keeps compatibility with older code
         UserId: u.UserId,
         name: u.name,
         email: u.email,
@@ -119,20 +122,23 @@ export default function ViewCustomers() {
   };
 
   // ✅ Filter customers
-  const filteredCustomers = users.filter((c) => {
-    const query = search?.toLowerCase() || "";
-    const isAdmin = currentUser?.role?.toLowerCase() === "admin";
+const filteredCustomers = Array.isArray(users)
+  ? users.filter((c) => {
+      const query = search?.toLowerCase() || "";
+      const isAdmin = currentUser?.role?.toLowerCase() === "admin";
 
-    return (
-      c.role?.toLowerCase() === "customer" &&
-      (isAdmin || c.UserId === currentUser?.id) && // ✅ Admin sees all
-      (
-        (c.name?.toLowerCase() || "").includes(query) ||
-        (c.email?.toLowerCase() || "").includes(query) ||
-        (c.phone || "").includes(search || "")
-      )
-    );
-  });
+      return (
+        c.role?.toLowerCase() === "customer" &&
+        (isAdmin || c.UserId === currentUser?._id || c.UserId === currentUser?.id) &&
+        (
+          (c.name?.toLowerCase() || "").includes(query) ||
+          (c.email?.toLowerCase() || "").includes(query) ||
+          (c.phone || "").includes(search || "")
+        )
+      );
+    })
+  : [];
+
 
   // ✅ UI
   return (
@@ -222,9 +228,13 @@ export default function ViewCustomers() {
 
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: "#3b82f6" }]}
-                  onPress={() => router.push(`/viewmeasurments?customerId=${item.id}`)}
+                  onPress={() => {
+                    console.log("🧾 item:", item);
+                    console.log("🧾 item._id:", item._id);
+                    router.push(`/viewmeasurments?customerId=${item._id}`);
+                  }}
                 >
-                  
+
                   <Text style={styles.btnText}>📏 Measure</Text>
                 </TouchableOpacity>
               </View>
@@ -232,7 +242,7 @@ export default function ViewCustomers() {
           )}
         />
       )}
-       
+
 
       {/* Modals */}
       <Add
@@ -248,7 +258,7 @@ export default function ViewCustomers() {
           onClose={() => setEditModalVisible(false)}
         />
       )}
-      
+
     </View>
 
   );
