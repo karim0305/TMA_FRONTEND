@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Appearance,
+  SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
@@ -225,6 +226,7 @@ const HandleLogin = async (): Promise<void> => {
 
   const [selectedRole, setSelectedRole] = useState("Customer");
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
     <View>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={[styles.card, { backgroundColor: theme.card }]}>
@@ -281,98 +283,7 @@ const HandleLogin = async (): Promise<void> => {
         </View>
       </View>
 
-      {/* SignUp Modal */}
-      {/* <Modal visible={isSignUpVisible} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalCard, { backgroundColor: theme.card }]}>
-            <Text style={[styles.title, { color: theme.text }]}>Sign Up</Text>
-
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Name"
-              placeholderTextColor="#888"
-            />
-
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Email"
-              placeholderTextColor="#888"
-            />
-
-             <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Phone Number"
-              placeholderTextColor="#888"
-            />
-
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Password"
-              placeholderTextColor="#888"
-              secureTextEntry
-            />
-
-            <TextInput
-              style={[
-                styles.input,
-                { backgroundColor: theme.input, color: theme.text },
-              ]}
-              placeholder="Confirm Password"
-              placeholderTextColor="#888"
-              secureTextEntry
-            />
-
-           <RNPickerSelect
-  onValueChange={(value) => setSelectedRole(value)}
-  items={[
-   
-    { label: "Tailor", value: "2" },
-    { label: "Customer", value: "3" },
-  ]}
-  placeholder={{ label: "Select Role", value: null }}
-  style={{
-    inputAndroid: {
-         width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 8,
-    },
-    inputIOS: {
-        width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 8,
-    },
-  }}
-  value={selectedRole}
-/>
-
-
-            <TouchableOpacity
-              style={styles.button}
-              onPress={() => setIsSignUpVisible(false)}
-            >
-              <Text style={styles.buttonText}>Register</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={() => setIsSignUpVisible(false)}>
-              <Text style={styles.linkText}>Close</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal> */}
+ 
 
       <Add
         visible={isSignUpVisible}
@@ -380,6 +291,7 @@ const HandleLogin = async (): Promise<void> => {
         onAdd={handleAddAdmin}
       />
     </View>
+    </SafeAreaView>
   );
 }
 
