@@ -6,7 +6,10 @@ import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Appearance,
+  KeyboardAvoidingView,
+  Platform,
   SafeAreaView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -227,6 +230,12 @@ const HandleLogin = async (): Promise<void> => {
   const [selectedRole, setSelectedRole] = useState("Customer");
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
+       <KeyboardAvoidingView
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    style={{ flex: 1 }}
+  >
+    <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}>
+  
     <View>
       <View style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={[styles.card, { backgroundColor: theme.card }]}>
@@ -291,47 +300,58 @@ const HandleLogin = async (): Promise<void> => {
         onAdd={handleAddAdmin}
       />
     </View>
+      </ScrollView>
+  </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
-  },
-  card: {
-    width: "100%",
-    maxWidth: 400,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-  },
+container: {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingHorizontal: 20,
+  backgroundColor: "#f2f2f2",
+},
+
+card: {
+  width: "90%",              // responsive width
+  maxWidth: 400,             // good for web
+  paddingVertical: 30,
+  paddingHorizontal: 20,
+  borderRadius: 16,
+  backgroundColor: "#fff",
+  shadowColor: "#000",
+  shadowOffset: { width: 0, height: 3 },
+  shadowOpacity: 0.2,
+  shadowRadius: 4,
+  elevation: 6,              // Android shadow
+},
   title: {
     fontSize: 20,
     fontWeight: "bold",
     textAlign: "center",
     marginVertical: 10,
   },
-  input: {
-    width: "100%",
-    padding: 12,
-    borderRadius: 8,
-    marginVertical: 8,
-  },
-  button: {
-    backgroundColor: "black",
-    padding: 15,
-    borderRadius: 8,
-    alignItems: "center",
-    marginTop: 12,
-  },
+input: {
+  width: "100%",
+  paddingVertical: 12,
+  paddingHorizontal: 15,
+  borderRadius: 8,
+  marginVertical: 8,
+  backgroundColor: "#f0f0f0",
+  color: "#000",
+},
+ 
+button: {
+  width: "100%",
+  backgroundColor: "black",
+  paddingVertical: 14,
+  borderRadius: 8,
+  alignItems: "center",
+  marginTop: 10,
+},
   buttonText: {
     color: "#fff",
     fontSize: 16,
