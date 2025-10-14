@@ -9,15 +9,16 @@ import {
   Image,
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { User, updateUser } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
+import { EditUserStyle } from "../styles/EditUserStyle";
+import Toast from "react-native-toast-message";
 
 // 🔹 Cloudinary Config
 const CLOUD_NAME = "dzfqgziwl";
@@ -119,7 +120,13 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
         UserApi.updateUser(updatedTailor.id),
         changedFields
       );
-
+        Toast.show({
+                  type: "success",
+                  text1: "User Updated successful! 🎉",
+               
+                  position: "top",
+                  visibilityTime: 3000,
+                });
       console.log("✅ User updated:", res.data);
 
           dispatch(updateUser(res.data));
@@ -135,26 +142,26 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent>
-      <View style={styles.modalContainer}>
-        <View style={styles.modalContent}>
+      <View style={EditUserStyle.modalContainer}>
+        <View style={EditUserStyle.modalContent}>
           {/* Profile Image */}
           <View style={{ position: "relative", alignSelf: "center" }}>
             {updatedTailor?.image ? (
               <Image
                 source={{ uri: updatedTailor.image }}
-                style={styles.profileImage}
+                style={EditUserStyle.profileImage}
               />
             ) : null}
-            <TouchableOpacity style={styles.cameraIcon} onPress={pickImage}>
+            <TouchableOpacity style={EditUserStyle.cameraIcon} onPress={pickImage}>
               <Ionicons name="camera" size={22} color="white" />
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.modalHeading}>Edit User</Text>
+          <Text style={EditUserStyle.modalHeading}>Edit User</Text>
 
           <ScrollView>
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="Name"
               value={updatedTailor?.name}
               onChangeText={(text) =>
@@ -162,7 +169,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
               }
             />
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="Phone"
               value={updatedTailor?.phone}
               onChangeText={(text) =>
@@ -170,7 +177,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
               }
             />
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="CNIC"
               value={updatedTailor?.cnic}
               onChangeText={(text) =>
@@ -178,7 +185,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
               }
             />
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="Address"
               value={updatedTailor?.address}
               onChangeText={(text) =>
@@ -186,7 +193,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
               }
             />
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="Email"
               keyboardType="email-address"
               value={updatedTailor?.email}
@@ -196,7 +203,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
             />
 
           {currentUser?.role === "Admin" && (
-  <View style={styles.pickerWrapper}>
+  <View style={EditUserStyle.pickerWrapper}>
     <Picker
       selectedValue={updatedTailor?.role}
       onValueChange={(value) =>
@@ -214,7 +221,7 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
 
             {/* Password Field */}
             <TextInput
-              style={styles.input}
+              style={EditUserStyle.input}
               placeholder="Password"
               secureTextEntry
               value={updatedTailor?.password || ""}
@@ -225,23 +232,23 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
           </ScrollView>
 
           {/* Buttons */}
-          <View style={styles.modalActions}>
+          <View style={EditUserStyle.modalActions}>
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: "black", flex: 1 }]}
+              style={[EditUserStyle.btn, { backgroundColor: "black", flex: 1 }]}
               onPress={handleUpdateTailor}
               disabled={loading}
             >
-              <Text style={styles.btnText}>
+              <Text style={EditUserStyle.btnText}>
                 {loading ? "Updating..." : "Update"}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: "gray", flex: 1 }]}
+              style={[EditUserStyle.btn, { backgroundColor: "gray", flex: 1 }]}
               onPress={onClose}
               disabled={loading}
             >
-              <Text style={styles.btnText}>Cancel</Text>
+              <Text style={EditUserStyle.btnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -250,65 +257,3 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  modalContainer: {
-    flex: 1,
-    justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
-    padding: 16,
-  },
-  modalContent: {
-    backgroundColor: "white",
-    borderRadius: 8,
-    padding: 20,
-  },
-  modalHeading: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 12,
-    textAlign: "center",
-  },
-  profileImage: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    marginBottom: 16,
-  },
-  cameraIcon: {
-    position: "absolute",
-    bottom: 10,
-    right: 10,
-    backgroundColor: "black",
-    borderRadius: 20,
-    padding: 6,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    padding: 10,
-    marginBottom: 10,
-    fontSize: 14,
-  },
-  pickerWrapper: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 6,
-    marginBottom: 10,
-  },
-  modalActions: {
-    flexDirection: "row",
-    gap: 10,
-    marginTop: 10,
-  },
-  btn: {
-    paddingVertical: 8,
-    borderRadius: 6,
-    alignItems: "center",
-  },
-  btnText: {
-    color: "white",
-    fontWeight: "600",
-    fontSize: 13,
-  },
-});

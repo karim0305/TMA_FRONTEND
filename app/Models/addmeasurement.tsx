@@ -5,15 +5,16 @@ import React, { useEffect, useState } from "react";
 import {
   Modal,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import { addMeasurement } from "../redux/slices/measureSlice";
 import { RootState } from "../redux/store";
+import { MeasurementStyle } from "../styles/Measurement";
+import Toast from "react-native-toast-message";
 
 interface Measurement {
   date: string;
@@ -88,6 +89,12 @@ useEffect(() => {
       const res = await axios.post(MeasurementApi.addMeasurement, dataToSend);
 
       if (res?.data) {
+          Toast.show({
+                    type: "success",
+                    text1: "Measurement added successful! 🎉",
+                    position: "top",
+                    visibilityTime: 3000,
+                  });
         console.log("✅ Measurement saved successfully:", res.data);
         dispatch(addMeasurement(res.data.data));
          // 🔹 Clear all measurement fields
@@ -123,16 +130,16 @@ useEffect(() => {
 
   return (
     <Modal visible={visible} transparent animationType="slide">
-      <View style={styles.modalOverlay}>
-        <ScrollView style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Measurement</Text>
+      <View style={MeasurementStyle.modalOverlay}>
+        <ScrollView style={MeasurementStyle.modalContainer}>
+          <Text style={MeasurementStyle.modalTitle}>Measurement</Text>
 
           {/* Date */}
-          <View style={styles.row}>
-            <Text style={styles.label}>Date:</Text>
+          <View style={MeasurementStyle.row}>
+            <Text style={MeasurementStyle.label}>Date:</Text>
             <TextInput
               placeholder="YYYY-MM-DD"
-              style={styles.inputField}
+              style={MeasurementStyle.inputField}
               value={localMeasurement.date}
               onChangeText={(text) =>
                 setLocalMeasurement({ ...localMeasurement, date: text })
@@ -144,11 +151,11 @@ useEffect(() => {
           {Object.keys(localMeasurement)
             .filter((key) => !["date", "UserId", "customerId"].includes(key))
             .map((key) => (
-              <View style={styles.row} key={key}>
-                <Text style={styles.label}>{key}:</Text>
+              <View style={MeasurementStyle.row} key={key}>
+                <Text style={MeasurementStyle.label}>{key}:</Text>
                 <TextInput
                   placeholder={key}
-                  style={styles.inputField}
+                  style={MeasurementStyle.inputField}
                   keyboardType="numeric"
                   value={(localMeasurement as any)[key]}
                   onChangeText={(text) =>
@@ -159,15 +166,15 @@ useEffect(() => {
             ))}
 
           {/* Buttons */}
-          <View style={styles.buttonRow}>
-            <TouchableOpacity style={[styles.btn, { backgroundColor: "#000" }]} onPress={handleSave}>
-              <Text style={styles.btnText}>Save</Text>
+          <View style={MeasurementStyle.buttonRow}>
+            <TouchableOpacity style={[MeasurementStyle.btn, { backgroundColor: "#000" }]} onPress={handleSave}>
+              <Text style={MeasurementStyle.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.btn, { backgroundColor: "#9ca3af" }]}
+              style={[MeasurementStyle.btn, { backgroundColor: "#9ca3af" }]}
               onPress={onClose}
             >
-              <Text style={styles.btnText}>Cancel</Text>
+              <Text style={MeasurementStyle.btnText}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -175,58 +182,3 @@ useEffect(() => {
     </Modal>
   );
 }
-
-// 🧩 Styles
-const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    justifyContent: "center",
-    padding: 20,
-  },
-  modalContainer: {
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 20,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  row: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 15,
-  },
-  label: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "500",
-  },
-  inputField: {
-    flex: 2,
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-  },
-  buttonRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  btn: {
-    flex: 1,
-    padding: 10,
-    borderRadius: 5,
-    alignItems: "center",
-    marginHorizontal: 5,
-  },
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
-  },
-});

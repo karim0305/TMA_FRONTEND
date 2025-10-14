@@ -13,6 +13,7 @@ import {
   TouchableOpacity,
   View
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { addUser } from "../redux/slices/userSlice"; // 👈 slice se import
 import { RootState } from "../redux/store";
@@ -52,42 +53,100 @@ useEffect(() => {
   // Pick image from gallery
  
   // 👇 Pick Image
- const pickImage = async () => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    aspect: [4, 4],
-    quality: 0.8,
-    base64: true, // 👈 enable base64
-  });
+ // 👇 Pick Image
+//  const pickImage = async () => {
+//   const result = await ImagePicker.launchImageLibraryAsync({
+//     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+//     allowsEditing: true,
+//     aspect: [4, 4],
+//     quality: 0.8,
+//     base64: true, // 👈 enable base64
+//   });
 
-  if (!result.canceled && result.assets.length > 0) {
-    const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-    const imageUrl = await uploadToCloudinary(base64Img);
+//   if (!result.canceled && result.assets.length > 0) {
+//     const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
+//     const imageUrl = await uploadToCloudinary(base64Img);
 
-    setNewUser((prev) => ({
+//     setNewUser((prev) => ({
+//       ...prev,
+//       image: imageUrl, // directly save Cloudinary URL
+//     }));
+//   }
+// };
+
+// const uploadToCloudinary = async (file: string) => {
+//   const formData = new FormData();
+//   formData.append("file", file); // 👈 base64 string
+//   formData.append("upload_preset", "tailorImages");
+
+//   try {
+//     const res = await axios.post(
+//       "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
+//       formData
+//     );
+//     return res.data.secure_url;
+//   } catch (err) {
+//     //console.error("❌ Cloudinary Upload Error:", err.response?.data || err.message);
+//     throw new Error("Image upload failed");
+//   }
+// };
+
+const handleUploadImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets?.length > 0) {
+      const selectedImageUri = result.assets[0].uri;
+  
+      const formData = new FormData();
+      formData.append("file", { uri: selectedImageUri, type: "image/jpeg", name: "profile.jpg" } as any);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      try {
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
+          {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        if (data.secure_url) {
+          const imageUrl = data.secure_url;
+          // set imag uri at use state setNewUser
+           setNewUser((prev) => ({
       ...prev,
       image: imageUrl, // directly save Cloudinary URL
     }));
-  }
-};
+         Toast.show({
+                type: "success",
+                text1: "User Added successful! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });;
+        } else {
+          Toast.show({
+                type: "success",
+                text1: "User Added successful! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });
+        }
+      } catch (err) {
+        Toast.show({
+                type: "error",
+                text1: "Failed .....",
+                position: "top",
+                visibilityTime: 3000,
+              });
+      } finally {
+       
+      }
+    }
+  };
 
-const uploadToCloudinary = async (file: string) => {
-  const formData = new FormData();
-  formData.append("file", file); // 👈 base64 string
-  formData.append("upload_preset", "tailorImages");
 
-  try {
-    const res = await axios.post(
-      "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
-      formData
-    );
-    return res.data.secure_url;
-  } catch (err) {
-    //console.error("❌ Cloudinary Upload Error:", err.response?.data || err.message);
-    throw new Error("Image upload failed");
-  }
-};
 
   // 👇 Add User (with Cloudinary URL)
 const dispatch = useDispatch();
@@ -106,6 +165,12 @@ const handleAddUser = async () => {
 
     const res = await axios.post(UserApi.addUser, userPayload);
        dispatch(addUser(res.data));
+      Toast.show({
+                type: "success",
+                text1: "User Added successful! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });
     console.log("✅ User Added Successfully:", res.data);
     onClose();
 
@@ -133,7 +198,7 @@ const handleAddUser = async () => {
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalHeading}>Add New User</Text>
+          <Text style={styles.modalHeading}>Register</Text>
 
           <ScrollView>
             <TextInput
@@ -189,7 +254,7 @@ const handleAddUser = async () => {
 
 {currentUser?.role === "Admin" ? (
   // 👑 Admin: Show Password + Full Role Picker
-  <View style={styles.pickerWrapper}>
+  <View style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 6, marginBottom: 10, backgroundColor: "#fff" }}>
     <TextInput
       style={styles.input}
       placeholder="Password"
@@ -232,7 +297,7 @@ const handleAddUser = async () => {
 
             <TouchableOpacity
         style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
-        onPress={pickImage}
+        onPress={handleUploadImage}
       >
         <Text style={styles.btnText}>Pick Image</Text>
       </TouchableOpacity>
@@ -255,7 +320,7 @@ const handleAddUser = async () => {
               disabled={loading}
             >
               <Text style={styles.btnText}>
-                {loading ? "Adding..." : "Add"}
+                {loading ? "Saving..." : "Save"}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity

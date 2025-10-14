@@ -1,14 +1,16 @@
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
-import { store } from "../app/redux/store"; // 👈 apna store import
+import { persistor, store } from "../app/redux/store"; // 👈 apna store import
 
 import "@/global.css";
 import { ToastProvider } from "expo-toast";
 import Toast from "react-native-toast-message";
+import { PersistGate } from "redux-persist/integration/react";
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
        <ToastProvider>
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
@@ -23,6 +25,7 @@ export default function RootLayout() {
       </Stack>
         <Toast /> 
       </ToastProvider>
+      </PersistGate>
     </Provider>
   );
 }

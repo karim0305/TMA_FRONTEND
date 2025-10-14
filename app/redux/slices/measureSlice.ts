@@ -5,6 +5,7 @@ export interface Measurement {
   
   _id?: string;
   UserId: string;
+  name: string;
   customerId: string;
   date: string;
   Chest?: string;

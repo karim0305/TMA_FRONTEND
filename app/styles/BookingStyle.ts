@@ -1,0 +1,51 @@
+import { StyleSheet } from "react-native";
+// ✅ Styles
+export const BookingStyle = StyleSheet.create({
+  container: { flex: 1, padding: 16, backgroundColor: "#f3f4f6" },
+  addBtn: {
+    backgroundColor: "#111827",
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 10,
+  },
+  addBtnText: { color: "white", fontWeight: "600", fontSize: 16 },
+  searchInput: {
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+    padding: 10,
+    marginBottom: 16,
+    backgroundColor: "white",
+  },
+  card: {
+    backgroundColor: "white",
+    borderRadius: 14,
+    padding: 14,
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  avatar: { width: 80, height: 80, borderRadius: 10, marginRight: 10 },
+  name: { fontSize: 18, fontWeight: "600", marginBottom: 6, color: "#111827" },
+  detail: { fontSize: 14, color: "#374151", marginBottom: 2 },
+  statusBtn: {
+    marginTop: 10,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    alignSelf: "flex-start",
+  },
+  statusText: { color: "white", fontWeight: "600", fontSize: 13 },
+  actions: { flexDirection: "row", marginTop: 12, justifyContent: "flex-end" },
+  actionBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+  },
+  actionText: { color: "white", fontSize: 16, fontWeight: "bold" },
+});

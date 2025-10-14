@@ -16,6 +16,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { addSuitBooking } from "../redux/slices/suitBookingSlice";
 import { AppDispatch, RootState } from "../redux/store";
+import Toast from "react-native-toast-message";
 
  // ⚠️ Change to your actual API URL
 
@@ -72,21 +73,21 @@ const UPLOAD_PRESET = "tailorImages";
 
 // ✅ Cloudinary Upload
 const uploadToCloudinary = async (file: string) => {
-  const formData = new FormData();
-  formData.append("file", file); // 👈 base64 string
-  formData.append("upload_preset", "tailorImages");
-
   try {
     const res = await axios.post(
       "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
-      formData
+      {
+        file, // ✅ base64 string directly — no FormData needed
+        upload_preset: "tailorImages",
+      }
     );
     return res.data.secure_url;
   } catch (err) {
-    //console.error("❌ Cloudinary Upload Error:", err.response?.data || err.message);
+    console.error("❌ Cloudinary Upload Error:", err);
     throw new Error("Image upload failed");
   }
 };
+
 
 
 // ✅ Pick Image
@@ -134,6 +135,13 @@ const handleSaveBooking = async () => {
     if (response.data.success) {
       dispatch(addSuitBooking(response.data.data));
       console.log("✅ Booking Added Successfully");
+        Toast.show({
+                  type: "success",
+                  text1: "Booking successful! 🎉",
+                
+                  position: "top",
+                  visibilityTime: 3000,
+                });
   
       setBookingDate("");
       setCompletionDate("");

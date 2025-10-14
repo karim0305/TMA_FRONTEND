@@ -10,11 +10,10 @@ import {
   FlatList,
   Image,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
+  View
 } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import BookingModal from "../Models/bookingsuit";
@@ -25,6 +24,7 @@ import {
   updateSuitBooking,
 } from "../redux/slices/suitBookingSlice";
 import { RootState } from "../redux/store";
+import { BookingStyle } from "../styles/BookingStyle";
 
 export default function Bookings() {
   const dispatch = useDispatch();
@@ -44,13 +44,13 @@ export default function Bookings() {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          style={styles.addBtn}
+          style={BookingStyle.addBtn}
           onPress={() => {
             setSelectedBooking(null);
             setModalVisible(true);
           }}
         >
-          <Text style={styles.addBtnText}>+</Text>
+          <Text style={BookingStyle.addBtnText}>+</Text>
         </TouchableOpacity>
       ),
     });
@@ -171,10 +171,10 @@ const filteredBookings = Bookings.filter(
   };
 
   return (
-    <View style={styles.container}>
+    <View style={BookingStyle.container}>
       {/* 🔍 Search */}
       <TextInput
-        style={styles.searchInput}
+        style={BookingStyle.searchInput}
         placeholder="Search by customer or date..."
         value={search}
         onChangeText={setSearch}
@@ -185,7 +185,7 @@ const filteredBookings = Bookings.filter(
         data={filteredBookings}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <View style={styles.card}>
+          <View style={BookingStyle.card}>
             {/* 🖼 Images */}
             {item.image && item.image.length > 0 ? (
               <ScrollView
@@ -196,7 +196,7 @@ const filteredBookings = Bookings.filter(
                {item.image && item.image.length > 0 && (
   <Image
     source={{ uri: item.image[0] }} // ✅ Show only the first image
-    style={styles.avatar}
+    style={BookingStyle.avatar}
     resizeMode="cover"
   />
 )}
@@ -214,34 +214,34 @@ const filteredBookings = Bookings.filter(
             )}
 
             {/* ℹ️ Info */}
-            <Text style={styles.name}>
+            <Text style={BookingStyle.name}>
               {index + 1}. {item.customerName || "Unknown"}
             </Text>
         
-            <Text style={styles.detail}>📅 Booking: {item.bookingDate}</Text>
-            <Text style={styles.detail}>
+            <Text style={BookingStyle.detail}>📅 Booking: {item.bookingDate}</Text>
+            <Text style={BookingStyle.detail}>
               ✅ Completion: {item.completionDate}
             </Text>
-            <Text style={styles.detail}>💵 Fee: Rs {item.stitchingFee}</Text>
+            <Text style={BookingStyle.detail}>💵 Fee: Rs {item.stitchingFee}</Text>
 
             {/* 🔘 Status */}
             <TouchableOpacity
               style={[
-                styles.statusBtn,
+                BookingStyle.statusBtn,
                 { backgroundColor: getStatusColor(item.status) },
               ]}
               onPress={() => handleStatus(item.id)}
             >
-              <Text style={styles.statusText}>{item.status}</Text>
+              <Text style={BookingStyle.statusText}>{item.status}</Text>
             </TouchableOpacity>
 
             {/* 🗑 Delete */}
-            <View style={styles.actions}>
+            <View style={BookingStyle.actions}>
               <TouchableOpacity
-                style={[styles.actionBtn, { backgroundColor: "#ef4444" }]}
+                style={[BookingStyle.actionBtn, { backgroundColor: "#ef4444" }]}
                 onPress={() => deleteBooking(item.id)}
               >
-                <Text style={styles.actionText}>🗑</Text>
+                <Text style={BookingStyle.actionText}>🗑</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -261,54 +261,3 @@ const filteredBookings = Bookings.filter(
     </View>
   );
 }
-
-// ✅ Styles
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#f3f4f6" },
-  addBtn: {
-    backgroundColor: "#111827",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 16 },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 16,
-    backgroundColor: "white",
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: 14,
-    padding: 14,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  avatar: { width: 80, height: 80, borderRadius: 10, marginRight: 10 },
-  name: { fontSize: 18, fontWeight: "600", marginBottom: 6, color: "#111827" },
-  detail: { fontSize: 14, color: "#374151", marginBottom: 2 },
-  statusBtn: {
-    marginTop: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    alignSelf: "flex-start",
-  },
-  statusText: { color: "white", fontWeight: "600", fontSize: 13 },
-  actions: { flexDirection: "row", marginTop: 12, justifyContent: "flex-end" },
-  actionBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: 8,
-  },
-  actionText: { color: "white", fontSize: 16, fontWeight: "bold" },
-});

@@ -6,7 +6,6 @@ import React, { useEffect, useLayoutEffect, useState } from "react";
 import {
   FlatList,
   Image,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -18,6 +17,7 @@ import Edit from "../Models/Edit"; // 👈 Edit Admin modal
 import PackageModal from "../Models/package"; // 👈 Package modal
 import { addUser, deleteUser, setUsers, updateUser, User } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
+import { UserStyle } from "../styles/UserStyle";
 
 
 export type Admin = {
@@ -47,10 +47,10 @@ const admins = useSelector((state: RootState) => state.users.list);
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          style={styles.addBtn}
+          style={UserStyle.addBtn}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.addBtnText}>+</Text>
+          <Text style={UserStyle.addBtnText}>+</Text>
         </TouchableOpacity>
       ),
     });
@@ -146,21 +146,21 @@ const getRoleColor = (role: string) => {
 };
 
   return (
-    <View style={styles.container}>
+    <View style={UserStyle.container}>
       {/* Header */}
-      {/* <View style={styles.headerRow}>
-        <Text style={styles.heading}>All Admins</Text>
+      {/* <View style={UserStyle.headerRow}>
+        <Text style={UserStyle.heading}>All Admins</Text>
         <TouchableOpacity
-          style={styles.addBtn}
+          style={UserStyle.addBtn}
           onPress={() => setModalVisible(true)}
         >
-          <Text style={styles.addBtnText}>+ Add New</Text>
+          <Text style={UserStyle.addBtnText}>+ Add New</Text>
         </TouchableOpacity>
       </View> */}
 
       {/* 🔍 Search Bar */}
       <TextInput
-        style={styles.searchInput}
+        style={UserStyle.searchInput}
         placeholder="Search by name, email, or phone..."
         value={search}
         onChangeText={setSearch}
@@ -171,60 +171,60 @@ const getRoleColor = (role: string) => {
         data={filteredAdmins}
         keyExtractor={(item) => item.id}
         renderItem={({ item, index }) => (
-          <View style={styles.card}>
-            <View style={styles.row}>
+          <View style={UserStyle.card}>
+            <View style={UserStyle.row}>
               {/* Image */}
-              <Image source={{ uri: item.image }} style={styles.avatar} />
+              <Image source={{ uri: item.image }} style={UserStyle.avatar} />
 
               {/* Info */}
-             <View style={styles.info}>
-  <Text style={styles.name}>
+             <View style={UserStyle.info}>
+  <Text style={UserStyle.name}>
     {index + 1}. {item.name}
   </Text>
 
-  <View style={styles.rowDetail}>
-    <Ionicons name="call-outline" size={16} color="#374151" style={styles.icon} />
-    <Text style={styles.detail}>{item.phone}</Text>
+  <View style={UserStyle.rowDetail}>
+    <Ionicons name="call-outline" size={16} color="#374151" style={UserStyle.icon} />
+    <Text style={UserStyle.detail}>{item.phone}</Text>
   </View>
 
-  <View style={styles.rowDetail}>
-    <Ionicons name="id-card-outline" size={16} color="#374151" style={styles.icon} />
-    <Text style={styles.detail}>{item.cnic}</Text>
+  <View style={UserStyle.rowDetail}>
+    <Ionicons name="id-card-outline" size={16} color="#374151" style={UserStyle.icon} />
+    <Text style={UserStyle.detail}>{item.cnic}</Text>
   </View>
 
-  <View style={styles.rowDetail}>
-    <Ionicons name="mail-outline" size={16} color="#374151" style={styles.icon} />
-    <Text style={styles.detail}>{item.email}</Text>
+  <View style={UserStyle.rowDetail}>
+    <Ionicons name="mail-outline" size={16} color="#374151" style={UserStyle.icon} />
+    <Text style={UserStyle.detail}>{item.email}</Text>
   </View>
 
-  <View style={styles.rowDetail}>
-    <Ionicons name="home-outline" size={16} color="#374151" style={styles.icon} />
-    <Text style={styles.detail}>{item.address}</Text>
+  <View style={UserStyle.rowDetail}>
+    <Ionicons name="home-outline" size={16} color="#374151" style={UserStyle.icon} />
+    <Text style={UserStyle.detail}>{item.address}</Text>
   </View>
 
- <View style={[styles.badge, { backgroundColor: getRoleColor(item.role) }]}>
+ <View style={[UserStyle.badge, { backgroundColor: getRoleColor(item.role) }]}>
   <Text style={{ color: "white", fontSize: 12 }}>{item.role}</Text>
 </View>
 </View>
             </View>
 
             {/* Actions */}
-            <View style={styles.actions}>
+            <View style={UserStyle.actions}>
               <TouchableOpacity
-                style={[styles.btn, { backgroundColor: "black" }]}
+                style={[UserStyle.btn, { backgroundColor: "black" }]}
                 onPress={() => {
                   setSelectedAdmin(item);
                   setEditModalVisible(true);
                 }}
               >
-                <Text style={styles.btnText}>✏️ Edit</Text>
+                <Text style={UserStyle.btnText}>✏️ Edit</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.btn, { backgroundColor: "#ef4444" }]}
+                style={[UserStyle.btn, { backgroundColor: "#ef4444" }]}
                 onPress={() => handleDelete(item.id)}
               >
-                <Text style={styles.btnText}>🗑 Delete</Text>
+                <Text style={UserStyle.btnText}>🗑 Delete</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -258,87 +258,3 @@ const getRoleColor = (role: string) => {
     </View>
   );
 }
-
-// Styles
-const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: "#f9fafb" },
-  headerRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 14,
-  },
-  heading: { fontSize: 22, fontWeight: "bold", color: "#111827" },
-  addBtn: {
-    backgroundColor: "black",
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    marginEnd:10,
-  },
-  addBtnText: { color: "white", fontWeight: "600", fontSize: 14},
-
-  // ✅ Search bar style
-  searchInput: {
-    backgroundColor: "white",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-    marginBottom: 14,
-  },
-
-  card: {
-    backgroundColor: "white",
-    padding: 14,
-    borderRadius: 12,
-    marginBottom: 14,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
-  },
-  row: { flexDirection: "row", marginBottom: 8 },
-  avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    marginRight: 14,
-    backgroundColor: "#e5e7eb",
-  },
-  info: { flex: 1 },
-  name: { fontSize: 18, fontWeight: "600", marginBottom: 2, color: "#111827" },
-  detail: { fontSize: 14, color: "#374151", marginBottom: 2 },
-  badge: {
-    color: "white",
-    fontSize: 12,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 12,
-    overflow: "hidden",
-    marginTop: 6,
-    alignSelf: "flex-start",
-  },
-  actions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 10,
-  },
-  btn: {
-    flex: 1,
-    marginHorizontal: 4,
-    paddingVertical: 8,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  btnText: { color: "white", fontWeight: "600", fontSize: 13 },
-  rowDetail: {
-  flexDirection: "row",
-  alignItems: "center",
-  marginBottom: 2,
-},
-icon: {
-  marginRight: 6,
-},
-});

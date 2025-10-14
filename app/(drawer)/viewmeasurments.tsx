@@ -25,6 +25,7 @@ export default function ViewMeasurements() {
  const params = useLocalSearchParams();
  // console.log("Params:", params); // Should log { customerId: "..." }
   const customerId = params.customerId;
+   const customername = params.customername;
 
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -137,7 +138,7 @@ const filteredMeasurements = measurements.filter((m) => {
         </View>
       ) : (
         <ScrollView style={styles.container}>
-          <Text style={styles.title}>My Measurements</Text>
+          <Text style={styles.title}>{customername} Measurements</Text>
 
           {filteredMeasurements.map((item: Measurement, index: number) => (
             <View key={item._id || index} style={styles.card}>
@@ -178,7 +179,7 @@ const filteredMeasurements = measurements.filter((m) => {
               <View style={styles.actionRow}>
                 <TouchableOpacity
                   style={[styles.actionBtn, { backgroundColor: "#22c55e" }]}
-                  onPress={() => router.push(`/suitbooking?measureId=${item._id}&customerId=${typeof item.customerId === "object" ? item.customerId._id : item.customerId}`)}
+                  onPress={() => router.push(`/suitbooking?measureId=${item._id}&customerId=${typeof item.customerId === "object" ? item.customerId._id : item.customerId}&customername=${params.customername}`)}
                 >
                   <Text style={styles.actionText}>Suit Booking</Text>
                 </TouchableOpacity>

@@ -1,6 +1,5 @@
 import { AuthApi } from "@/api/apis";
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -10,7 +9,6 @@ import {
   Platform,
   SafeAreaView,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -20,6 +18,7 @@ import Toast from "react-native-toast-message";
 import { useDispatch } from "react-redux";
 import Add from "./Models/add";
 import { addUser, setCurrentUser, setLoading, User } from "./redux/slices/userSlice";
+import { loginStyles } from "./styles/LoginStyle";
 
 
 export type user = {
@@ -55,8 +54,8 @@ const HandleLogin = async (): Promise<void> => {
       const user = res.data.user;
 
       // ✅ Save to AsyncStorage
-      await AsyncStorage.setItem("token", res.data.access_token);
-      await AsyncStorage.setItem("user", JSON.stringify(user));
+      // await AsyncStorage.setItem("token", res.data.access_token);
+      // await AsyncStorage.setItem("user", JSON.stringify(user));
 
       // ✅ Save to Redux
       dispatch(
@@ -237,21 +236,21 @@ const HandleLogin = async (): Promise<void> => {
     <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}>
   
     <View>
-      <View style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={[styles.card, { backgroundColor: theme.card }]}>
+      <View style={[loginStyles.container, { backgroundColor: theme.background }]}>
+        <View style={[loginStyles.card, { backgroundColor: theme.card }]}>
           {/* Tailor Icon */}
           <View style={{ justifyContent: "center", alignItems: "center" }}>
             <Ionicons name="cut" size={100} color={theme.text} />
           </View>
 
-          <Text style={[styles.title, { color: theme.text }]}>
+          <Text style={[loginStyles.title, { color: theme.text }]}>
             Welcome To E-Tailor
           </Text>
-          <Text style={[styles.title, { color: theme.text }]}>Login</Text>
+          <Text style={[loginStyles.title, { color: theme.text }]}>Login</Text>
 
           <TextInput
             style={[
-              styles.input,
+              loginStyles.input,
               { backgroundColor: theme.input, color: theme.text },
             ]}
             placeholder="Email"
@@ -262,7 +261,7 @@ const HandleLogin = async (): Promise<void> => {
 
           <TextInput
             style={[
-              styles.input,
+              loginStyles.input,
               { backgroundColor: theme.input, color: theme.text },
             ]}
             placeholder="Password"
@@ -273,21 +272,21 @@ const HandleLogin = async (): Promise<void> => {
           />
 
           {/* Sign In Button */}
-          <TouchableOpacity style={styles.button} onPress={HandleLogin}>
-            <Text style={styles.buttonText}>Sign In</Text>
+          <TouchableOpacity style={loginStyles.button} onPress={HandleLogin}>
+            <Text style={loginStyles.buttonText}>Sign In</Text>
           </TouchableOpacity>
 
           {/* Forgot Password link */}
           <TouchableOpacity>
-            <Text style={styles.linkText}>Forgot Password?</Text>
+            <Text style={loginStyles.linkText}>Forgot Password?</Text>
           </TouchableOpacity>
 
           {/* Sign Up Button */}
           <TouchableOpacity
-            style={[styles.button, { backgroundColor: "gray", marginTop: 12 }]}
+            style={[loginStyles.button, { backgroundColor: "gray", marginTop: 12 }]}
             onPress={() => setIsSignUpVisible(true)}
           >
-            <Text style={styles.buttonText}>Sign Up</Text>
+            <Text style={loginStyles.buttonText}>Sign Up</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -305,85 +304,3 @@ const HandleLogin = async (): Promise<void> => {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-container: {
-  flex: 1,
-  justifyContent: "center",
-  alignItems: "center",
-  paddingHorizontal: 20,
-  backgroundColor: "#f2f2f2",
-},
-
-card: {
-  width: "90%",              // responsive width
-  maxWidth: 400,             // good for web
-  paddingVertical: 30,
-  paddingHorizontal: 20,
-  borderRadius: 16,
-  backgroundColor: "#fff",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 3 },
-  shadowOpacity: 0.2,
-  shadowRadius: 4,
-  elevation: 6,              // Android shadow
-},
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 10,
-  },
-input: {
-  width: "100%",
-  paddingVertical: 12,
-  paddingHorizontal: 15,
-  borderRadius: 8,
-  marginVertical: 8,
-  backgroundColor: "#f0f0f0",
-  color: "#000",
-},
- 
-button: {
-  width: "100%",
-  backgroundColor: "black",
-  paddingVertical: 14,
-  borderRadius: 8,
-  alignItems: "center",
-  marginTop: 10,
-},
-  buttonText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  linkText: {
-    color: "black",
-    fontSize: 14,
-    fontWeight: "500",
-    textAlign: "center",
-    marginTop: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  modalCard: {
-    width: "90%",
-    padding: 20,
-    borderRadius: 12,
-  },
-
-
-
-
-
-
-  dropdownContainer: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-  },
-
-});

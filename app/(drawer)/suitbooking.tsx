@@ -1,4 +1,5 @@
 import { SuitBookingApi } from "@/api/apis";
+import {SuitBookingStyle} from "../styles/SuitBookingStyle"
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
@@ -45,18 +46,20 @@ export default function ViewBookings() {
     navigation.setOptions({
       headerRight: () => (
         <TouchableOpacity
-          style={[styles.btn, { backgroundColor: "black", marginTop: 20 }]}
+          style={[SuitBookingStyle.btn, { backgroundColor: "black", marginTop: 20 }]}
           onPress={openAddModal}
         >
-          <Text style={styles.btnText}>+</Text>
+          <Text style={SuitBookingStyle.btnText}>+</Text>
         </TouchableOpacity>
       ),
     });
   }, [navigation]);
   const [customerId, setCustomerId] = useState<string | null>(null);
 const [measureId, setMeasureId] = useState<string | null>(null);
+const [cusName, setCustomername]  = useState<string | null>(null);
 
 useEffect(() => {
+   if (params?.customername) setCustomername(params.customername.toString());
   if (params?.measureId) setMeasureId(params.measureId.toString());
   if (params?.customerId) setCustomerId(params.customerId.toString());
 
@@ -214,15 +217,15 @@ const handleStatus = async (id: string) => {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>Customer Name Bookings</Text>
+    <ScrollView style={SuitBookingStyle.container}>
+     <Text style={SuitBookingStyle.title}>{cusName ? cusName : "Customer"} Bookings</Text>
 
       {Bookings.map((b: any, index: any) => (
-        <View key={b.id} style={styles.card}>
+        <View key={b.id} style={SuitBookingStyle.card}>
           {b.image && b.image.length > 0 ? (
   <Image
     source={{ uri: b.image[0] }} // 👈 use first image
-    style={styles.image}
+    style={SuitBookingStyle.image}
     resizeMode="cover"
   />
 ) : (
@@ -231,31 +234,31 @@ const handleStatus = async (id: string) => {
   </Text>
 )}
 
-          <Text style={styles.cardText}>Booking Date: {b.bookingDate}</Text>
-          <Text style={styles.cardText}>Measurement Date: {b.measurementDate}</Text>
-          <Text style={styles.cardText}>Completion Date: {b.completionDate}</Text>
-          <Text style={styles.cardText}>Stitching Fee: {b.stitchingFee}</Text>
-          <Text style={styles.cardText}>Status: {b.status}</Text>
+          <Text style={SuitBookingStyle.cardText}>Booking Date: {b.bookingDate}</Text>
+          <Text style={SuitBookingStyle.cardText}>Measurement Date: {b.measurementDate}</Text>
+          <Text style={SuitBookingStyle.cardText}>Completion Date: {b.completionDate}</Text>
+          <Text style={SuitBookingStyle.cardText}>Stitching Fee: {b.stitchingFee}</Text>
+          <Text style={SuitBookingStyle.cardText}>Status: {b.status}</Text>
 
-          <View style={styles.buttonRow}>
+          <View style={SuitBookingStyle.buttonRow}>
             
 
             {/* 🔄 Status toggle button */}
             <TouchableOpacity
               style={[
-                styles.actionBtn,
+                SuitBookingStyle.actionBtn,
                 { backgroundColor: getStatusColor(b.status), flex: 1, marginRight: 5 },
               ]}
               onPress={() => handleStatus(b.id)}
             >
-              <Text style={styles.actionText}>{b.status}</Text>
+              <Text style={SuitBookingStyle.actionText}>{b.status}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.actionBtn, { backgroundColor: "#f87171", flex: 1, marginLeft: 5 }]}
+              style={[SuitBookingStyle.actionBtn, { backgroundColor: "#f87171", flex: 1, marginLeft: 5 }]}
               onPress={() => deleteBooking(b.id)}
             >
-              <Text style={styles.actionText}>Delete</Text>
+              <Text style={SuitBookingStyle.actionText}>Delete</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -273,42 +276,3 @@ const handleStatus = async (id: string) => {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, backgroundColor: "#f3f4f6", flex: 1 },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 20,
-    textAlign: "center",
-    color: "#111827",
-  },
-  card: {
-    backgroundColor: "#fff",
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 10,
-    elevation: 3,
-  },
-  cardText: { fontSize: 16, marginBottom: 5 },
-  image: {
-    width: "100%",
-    height: 150,
-    marginTop: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#e5e7eb",
-  },
-  buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
-  actionBtn: { padding: 10, borderRadius: 8, alignItems: "center" },
-  actionText: { color: "#fff", fontWeight: "bold" },
-  btn: {
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    marginVertical: 10,
-    backgroundColor: "#3b82f6",
-    marginEnd: 10,
-  },
-  btnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
-});

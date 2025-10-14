@@ -178,9 +178,9 @@ export default function ViewTailors() {
     onPress={() => handleToggleStatus(item)}
     activeOpacity={0.7}
     style={{
-      width: 16,
-      height: 16,
-      borderRadius: 8,
+      width: 30,
+      height: 30,
+      borderRadius: 15,
       backgroundColor: item.status === "Active" ? "#22c55e" : "#ef4444",
       justifyContent: "center",
       alignItems: "center",
@@ -214,14 +214,20 @@ export default function ViewTailors() {
                   setEditModalVisible(true);
                 }}
               >
-                <Text style={styles.btnText}>✏️ Edit</Text>
+                             <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="create-outline" size={20} color="#fff" />
+                    <Text style={styles.btnText}>Edit</Text>
+                  </View>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[styles.btn, { backgroundColor: "#ef4444" }]}
                 onPress={() => handleDelete(item.id)}
               >
-                <Text style={styles.btnText}>🗑 Delete</Text>
+                        <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                   <Ionicons name="trash-outline" size={20} color="#fff" />
+                   <Text style={styles.btnText}>Delete</Text>
+                 </View>
               </TouchableOpacity>
 
 

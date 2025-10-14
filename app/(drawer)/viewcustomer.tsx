@@ -216,14 +216,20 @@ const filteredCustomers = Array.isArray(users)
                     setEditModalVisible(true);
                   }}
                 >
-                  <Text style={styles.btnText}>✏️ Edit</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <Ionicons name="create-outline" size={20} color="#fff" />
+    <Text style={styles.btnText}>Edit</Text>
+  </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: "#ef4444" }]}
                   onPress={() => handleDelete(item.id)}
                 >
-                  <Text style={styles.btnText}>🗑 Delete</Text>
+                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <Ionicons name="trash-outline" size={20} color="#fff" />
+    <Text style={styles.btnText}>Delete</Text>
+  </View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -231,11 +237,14 @@ const filteredCustomers = Array.isArray(users)
                   onPress={() => {
                     console.log("🧾 item:", item);
                     console.log("🧾 item._id:", item._id);
-                    router.push(`/viewmeasurments?customerId=${item._id}`);
+                    router.push(`/viewmeasurments?customerId=${item._id}&customername=${item.name}`);
                   }}
                 >
 
-                  <Text style={styles.btnText}>📏 Measure</Text>
+                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+    <Ionicons name="resize-outline" size={20} color="#fff" />
+    <Text style={styles.btnText}>Measure</Text>
+  </View>
                 </TouchableOpacity>
               </View>
             </View>

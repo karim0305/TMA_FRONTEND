@@ -7,26 +7,21 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useDispatch, useSelector } from "react-redux";
 import { logoutUser } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function Layout() {
   const { currentUser } = useSelector((state: RootState) => state.users);
   const dispatch = useDispatch();
-  const handleLogout = async () => {
 
-      await AsyncStorage.removeItem("token");
-  await AsyncStorage.removeItem("user");
+  const handleLogout = () => {
     dispatch(logoutUser());
-    router.replace("/Login"); // Go back to login
+    router.replace("/Login");
   };
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
+        // ✅ Custom drawer content
         drawerContent={(props) => (
-
-
-
           <DrawerContentScrollView {...props}>
             {/* Header with profile info */}
             <View
@@ -41,12 +36,18 @@ export default function Layout() {
                 source={{ uri: currentUser?.image }}
                 style={{ width: 80, height: 80, borderRadius: 40 }}
               />
-              <Text style={{ marginTop: 10, fontSize: 18, fontWeight: "bold" }}>
+              <Text
+                style={{
+                  marginTop: 10,
+                  fontSize: 18,
+                  fontWeight: "bold",
+                }}
+              >
                 {currentUser?.name}
               </Text>
             </View>
 
-              {/* Admin Screens */}
+            {/* Admin Screens */}
             {currentUser?.role === "Admin" && (
               <>
                 <DrawerItem
@@ -59,7 +60,11 @@ export default function Layout() {
                 <DrawerItem
                   label="Profile"
                   icon={({ color, size }) => (
-                    <Ionicons name="person-circle-outline" size={size} color={color} />
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={size}
+                      color={color}
+                    />
                   )}
                   onPress={() => props.navigation.navigate("profile")}
                 />
@@ -80,17 +85,14 @@ export default function Layout() {
                 <DrawerItem
                   label="Users"
                   icon={({ color, size }) => (
-                    <Ionicons name="shield-checkmark-outline" size={size} color={color} />
+                    <Ionicons
+                      name="shield-checkmark-outline"
+                      size={size}
+                      color={color}
+                    />
                   )}
                   onPress={() => props.navigation.navigate("admins")}
                 />
-                {/* <DrawerItem
-                  label="Bookings"
-                  icon={({ color, size }) => (
-                    <Ionicons name="calendar-outline" size={size} color={color} />
-                  )}
-                  onPress={() => props.navigation.navigate("Bookings")}
-                /> */}
               </>
             )}
 
@@ -104,12 +106,14 @@ export default function Layout() {
                   )}
                   onPress={() => props.navigation.navigate("thome")}
                 />
-
-
                 <DrawerItem
                   label="Profile"
                   icon={({ color, size }) => (
-                    <Ionicons name="person-circle-outline" size={size} color={color} />
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={size}
+                      color={color}
+                    />
                   )}
                   onPress={() => props.navigation.navigate("profile")}
                 />
@@ -123,7 +127,11 @@ export default function Layout() {
                 <DrawerItem
                   label="Bookings"
                   icon={({ color, size }) => (
-                    <Ionicons name="calendar-outline" size={size} color={color} />
+                    <Ionicons
+                      name="calendar-outline"
+                      size={size}
+                      color={color}
+                    />
                   )}
                   onPress={() => props.navigation.navigate("Bookings")}
                 />
@@ -143,80 +151,95 @@ export default function Layout() {
                 <DrawerItem
                   label="Profile"
                   icon={({ color, size }) => (
-                    <Ionicons name="person-circle-outline" size={size} color={color} />
+                    <Ionicons
+                      name="person-circle-outline"
+                      size={size}
+                      color={color}
+                    />
                   )}
                   onPress={() => props.navigation.navigate("profile")}
                 />
               </>
             )}
 
-            {/* Common Logout (for all roles) */}
-           {/* 🚀 Fixed Logout at bottom */}
-      <View style={{ borderTopWidth: 1, borderTopColor: "#ccc" }}>
-        <DrawerItem
-          label="Logout"
-          icon={({ size }) => (
-            <Ionicons name="log-out-outline" size={size} color="red" />
-          )}
-          labelStyle={{ color: "red" }}
-          onPress={handleLogout}
-        />
-      </View>
+            {/* Logout */}
+            <View style={{ borderTopWidth: 1, borderTopColor: "#ccc" }}>
+              <DrawerItem
+                label="Logout"
+                icon={({ size }) => (
+                  <Ionicons name="log-out-outline" size={size} color="red" />
+                )}
+                labelStyle={{ color: "red" }}
+                onPress={handleLogout}
+              />
+            </View>
           </DrawerContentScrollView>
         )}
-
-
-
-
-
+        // ✅ Screen options
         screenOptions={({ navigation, route }) => ({
           headerShown: true,
           headerStyle: { backgroundColor: "#f4f4f4" },
           headerTitleStyle: { fontWeight: "bold", fontSize: 18 },
           drawerLabelStyle: { fontSize: 16 },
           drawerStyle: { width: 240 },
-          // ✅ Show Hamburger on "home", Back on others
-      headerLeft: () =>
-  ["home", "thome", "chome"].includes(route.name) ? (
-    <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 10 }}>
-      <Ionicons name="menu" size={26} color="black" />
-    </TouchableOpacity>
-  ) : (
-    <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
-      <Ionicons name="arrow-back" size={24} color="black" />
-    </TouchableOpacity>
-  ),
+
+          // ✅ Clean titles instead of (drawer)/home
+          headerTitle:
+            route.name === "home"
+              ? "Admin Dashboard"
+              : route.name === "thome"
+              ? "Tailor Dashboard"
+              : route.name === "chome"
+              ? "Customer Dashboard"
+              : route.name === "profile"
+              ? "My Profile"
+              : route.name === "viewtailor"
+              ? "All Tailors"
+              : route.name === "viewcustomer"
+              ? "All Customers"
+              : route.name === "admins"
+              ? "All Users"
+              : route.name === "Bookings"
+              ? "All Bookings"
+              : "Tailor Management",
+
+          // ✅ Hamburger for home, back for others
+          headerLeft: () =>
+            ["home", "thome", "chome"].includes(route.name) ? (
+              <TouchableOpacity
+                onPress={() => navigation.openDrawer()}
+                style={{ marginLeft: 10 }}
+              >
+                <Ionicons name="menu" size={26} color="black" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => router.back()}
+                style={{ marginLeft: 10 }}
+              >
+                <Ionicons name="arrow-back" size={24} color="black" />
+              </TouchableOpacity>
+            ),
         })}
       >
-        <Drawer.Screen name="home" options={{ title: "Dashboard" }} />
-        <Drawer.Screen name="thome" options={{ title: "Dashboard" }} />
-        <Drawer.Screen name="chome" options={{ title: "Dashboard" }} />
-        <Drawer.Screen name="profile" options={{ title: "My Profile" }} />
-        <Drawer.Screen name="viewtailor" options={{ title: "All Tailors" }} />
-        <Drawer.Screen name="viewcustomer" options={{ title: "All Customers" }} />
-        <Drawer.Screen name="admins" options={{ title: "All Users" }} />
-        <Drawer.Screen name="Bookings" options={{ title: "All Bookings" }} />
-
-
-
-
-
-
-        {/* Hidden Screens */}
+        {/* ✅ Screen definitions */}
+        <Drawer.Screen name="home" />
+        <Drawer.Screen name="thome" />
+        <Drawer.Screen name="chome" />
+        <Drawer.Screen name="profile" />
+        <Drawer.Screen name="viewtailor" />
+        <Drawer.Screen name="viewcustomer" />
+        <Drawer.Screen name="admins" />
+        <Drawer.Screen name="Bookings" />
         <Drawer.Screen
           name="Measurements"
-          options={{
-            title: "Measurements",
-            drawerItemStyle: { display: "none" } // ✅ hide from sidebar
-          }}
+          options={{ drawerItemStyle: { display: "none" } }}
         />
-
         <Drawer.Screen
           name="suitbooking"
-          options={{ title: "Suit Booking", drawerItemStyle: { display: "none" } }}
+          options={{ drawerItemStyle: { display: "none" } }}
         />
       </Drawer>
-
     </GestureHandlerRootView>
   );
 }
