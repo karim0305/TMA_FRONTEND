@@ -192,7 +192,7 @@ useEffect(() => {
               </>
             )}
           </View>
-
+ 
           {/* Other fields */}
           {Object.keys(localMeasurement)
             .filter((key) => !["date", "UserId", "customerId"].includes(key))

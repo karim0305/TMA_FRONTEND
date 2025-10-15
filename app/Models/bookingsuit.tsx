@@ -71,6 +71,14 @@ export default function BookingModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Ensure dates are set when modal opens (component may stay mounted between opens)
+  useEffect(() => {
+    if (visible) {
+      setBookingDate((prev) => (prev && prev.trim() ? prev : formatDate(new Date())));
+      setCompletionDate((prev) => (prev && prev.trim() ? prev : formatDate(new Date())));
+    }
+  }, [visible]);
+
 
 // ✅ Watch for changes in route params (robust to string[] and undefined)
 const [measureId, setMeasureId] = useState<string | null>(null);
@@ -303,7 +311,7 @@ const handleSaveBooking = async () => {
                 style={styles.input}
                 onPress={() => setShowBookingPicker(true)}
               >
-                <Text>{bookingDate || "Select booking date"}</Text>
+                <Text>{bookingDate || formatDate(new Date())}</Text>
               </TouchableOpacity>
               {showBookingPicker && (
                 <DateTimePicker
@@ -329,7 +337,7 @@ const handleSaveBooking = async () => {
                 style={styles.input}
                 onPress={() => setShowCompletionPicker(true)}
               >
-                <Text>{completionDate || "Select completion date"}</Text>
+                <Text>{completionDate || formatDate(new Date())}</Text>
               </TouchableOpacity>
               {showCompletionPicker && (
                 <DateTimePicker
