@@ -4,9 +4,9 @@ import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 export interface Measurement {
   
   _id?: string;
-  UserId: string;
+  UserId: string | { _id: string };
   name: string;
-  customerId: string;
+  customerId: string | { _id: string };
   date: string;
   Chest?: string;
   Waist?: string;

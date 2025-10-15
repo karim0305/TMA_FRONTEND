@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
-import { persistor, store } from "../app/redux/store"; // 👈 apna store import
+import { persistor, store } from "./redux/store"; // 👈 apna store import
 
 import "@/global.css";
 import { ToastProvider } from "expo-toast";

@@ -1,20 +1,22 @@
 import { MeasurementApi } from "@/api/apis";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   Modal,
+  Platform,
   ScrollView,
   Text,
   TextInput,
   TouchableOpacity,
   View
 } from "react-native";
+import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { addMeasurement } from "../redux/slices/measureSlice";
 import { RootState } from "../redux/store";
 import { MeasurementStyle } from "../styles/Measurement";
-import Toast from "react-native-toast-message";
 
 interface Measurement {
   date: string;
@@ -62,6 +64,15 @@ export default function MeasurementModal({ visible, measurement, onClose }: Prop
   // ✅ Local state for measurement form
   const [localMeasurement, setLocalMeasurement] = useState<Measurement>(measurement);
 
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+  const onChangeDate = (_: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+    if (selectedDate) {
+      setLocalMeasurement({ ...localMeasurement, date: formatDate(selectedDate) });
+    }
+  };
+
   // ✅ Keep measurement updated when modal opens
 useEffect(() => {
   if (customerId) {
@@ -72,6 +83,16 @@ useEffect(() => {
   }
 }, [customerId]);
 
+  // ✅ Ensure a default date exists (today) when modal opens
+  useEffect(() => {
+    setLocalMeasurement((prev) => ({
+      ...prev,
+      date: prev.date && prev.date.trim() ? prev.date : formatDate(new Date()),
+    }));
+    // run once on mount open
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ✅ Save handler
   const handleSave = async () => {
     try {
@@ -80,8 +101,14 @@ useEffect(() => {
         return;
       }
 
+      // Ensure date is present; default to today if missing
+      const ensuredDate = localMeasurement.date && localMeasurement.date.trim()
+        ? localMeasurement.date
+        : formatDate(new Date());
+
       const dataToSend = {
         ...localMeasurement,
+        date: ensuredDate,
         UserId,
         customerId: localMeasurement.customerId,
       };
@@ -99,7 +126,7 @@ useEffect(() => {
         dispatch(addMeasurement(res.data.data));
          // 🔹 Clear all measurement fields
   setLocalMeasurement({
-    date:"",
+    date: formatDate(new Date()),
     Chest: "",
     Waist: "",
     Length: "",
@@ -137,14 +164,33 @@ useEffect(() => {
           {/* Date */}
           <View style={MeasurementStyle.row}>
             <Text style={MeasurementStyle.label}>Date:</Text>
-            <TextInput
-              placeholder="YYYY-MM-DD"
-              style={MeasurementStyle.inputField}
-              value={localMeasurement.date}
-              onChangeText={(text) =>
-                setLocalMeasurement({ ...localMeasurement, date: text })
-              }
-            />
+            {Platform.OS === "web" ? (
+              <TextInput
+                placeholder="YYYY-MM-DD"
+                style={MeasurementStyle.inputField}
+                value={localMeasurement.date}
+                onChangeText={(text) =>
+                  setLocalMeasurement({ ...localMeasurement, date: text })
+                }
+              />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={MeasurementStyle.inputField}
+                  onPress={() => setShowDatePicker(true)}
+                >
+                  <Text>{localMeasurement.date || "Select date"}</Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={localMeasurement.date ? new Date(localMeasurement.date) : new Date()}
+                    mode="date"
+                    display="calendar"
+                    onChange={onChangeDate}
+                  />
+                )}
+              </>
+            )}
           </View>
 
           {/* Other fields */}

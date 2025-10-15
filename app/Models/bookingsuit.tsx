@@ -11,12 +11,14 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
+  Platform
 } from "react-native";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { addSuitBooking } from "../redux/slices/suitBookingSlice";
 import { AppDispatch, RootState } from "../redux/store";
-import Toast from "react-native-toast-message";
 
  // ⚠️ Change to your actual API URL
 
@@ -38,12 +40,11 @@ export default function BookingModal({
 
 
       const { currentUser } = useSelector((state: RootState) => state.users);
-      const params = useLocalSearchParams();
-      //   // const measureId = params.measureId;
-      //     const customerId = params.customerId;
-      //   // console.log("Measure id -----:", measureId); // Should log { customerId: "..." }
-      //   // console.log("Customer id -----:", customerId); // Should log { customerId: "..." }
-      //   // console.log("current  id -----:", currentUser?.id); 
+      // Normalize route params (handle string | string[])
+      const rawParams = useLocalSearchParams<{
+        customerId?: string | string[];
+        measureId?: string | string[];
+      }>();
   
   const dispatch = useDispatch<AppDispatch>();
   const [bookingDate, setBookingDate] = useState("");
@@ -52,77 +53,162 @@ export default function BookingModal({
   const [image, setImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const [showBookingPicker, setShowBookingPicker] = useState(false);
+  const [showCompletionPicker, setShowCompletionPicker] = useState(false);
+  const formatDate = (d: Date) => d.toISOString().split("T")[0];
+  const onChangeBookingDate = (_: any, selectedDate?: Date) => {
+    setShowBookingPicker(false);
+    if (selectedDate) setBookingDate(formatDate(selectedDate));
+  };
+  const onChangeCompletionDate = (_: any, selectedDate?: Date) => {
+    setShowCompletionPicker(false);
+    if (selectedDate) setCompletionDate(formatDate(selectedDate));
+  };
 
-// ✅ Watch for changes in route params
+  useEffect(() => {
+    setBookingDate((prev) => (prev && prev.trim() ? prev : formatDate(new Date())));
+    setCompletionDate((prev) => (prev && prev.trim() ? prev : formatDate(new Date())));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
+// ✅ Watch for changes in route params (robust to string[] and undefined)
 const [measureId, setMeasureId] = useState<string | null>(null);
 const [customerId, setCustomerId] = useState<string | null>(null);
 
+const coerceParam = (p?: string | string[]): string | null => {
+  if (Array.isArray(p)) return p[0] ?? null;
+  return p ?? null;
+};
+
 useEffect(() => {
-  if (params.measureId) {
-    setMeasureId(params.measureId as string);
-  }
-  if (params.customerId) {
-    setCustomerId(params.customerId as string);
-  }
-  console.log("🧾 measureId:", params.measureId);
-  console.log("👤 customerId:", params.customerId);
-}, [params.measureId, params.customerId]);
+  const nextMeasureId = coerceParam(rawParams.measureId);
+  const nextCustomerId = coerceParam(rawParams.customerId);
+  setMeasureId(nextMeasureId);
+  setCustomerId(nextCustomerId);
+  console.log("🧾 measureId:", nextMeasureId);
+  console.log("👤 customerId:", nextCustomerId);
+}, [rawParams.measureId, rawParams.customerId]);
   
 const CLOUD_NAME = "dzfqgziwl";
 const UPLOAD_PRESET = "tailorImages";
 
 // ✅ Cloudinary Upload
-const uploadToCloudinary = async (file: string) => {
-  try {
-    const res = await axios.post(
-      "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
-      {
-        file, // ✅ base64 string directly — no FormData needed
-        upload_preset: "tailorImages",
-      }
-    );
-    return res.data.secure_url;
-  } catch (err) {
-    console.error("❌ Cloudinary Upload Error:", err);
-    throw new Error("Image upload failed");
-  }
-};
+// const uploadToCloudinary = async (file: string) => {
+//   try {
+//     const res = await axios.post(
+//       "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
+//       {
+//         file, // ✅ base64 string directly — no FormData needed
+//         upload_preset: "tailorImages",
+//       }
+//     );
+//     return res.data.secure_url;
+//   } catch (err) {
+//     console.error("❌ Cloudinary Upload Error:", err);
+//     throw new Error("Image upload failed");
+//   }
+// };
+// // ✅ Pick Image
+// const pickImage = async () => {
+//   const result = await ImagePicker.launchImageLibraryAsync({
+//     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+//     allowsEditing: true,
+//     base64: true,
+//     quality: 0.8,
+//   });
 
-
-
-// ✅ Pick Image
-const pickImage = async () => {
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    allowsEditing: true,
-    base64: true,
-    quality: 0.8,
-  });
-
-  if (!result.canceled && result.assets.length > 0) {
-    try {
-      setLoading(true);
-      const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      const url = await uploadToCloudinary(base64Img);
-      setImage(url);
+//   if (!result.canceled && result.assets.length > 0) {
+//     try {
+//       setLoading(true);
+//       const base64Img = `data:image/jpeg;base64,${result.assets[0].base64}`;
+//       const url = await uploadToCloudinary(base64Img);
+//       setImage(url);
     
-    } catch (error) {
-      console.error("❌ Upload Failed", "Unable to upload image");
-    } finally {
-      setLoading(false);
+//     } catch (error) {
+//       console.error("❌ Upload Failed", "Unable to upload image");
+//     } finally {
+//       setLoading(false);
+//     }
+//   }
+// };
+const handleUploadImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets?.length > 0) {
+      const selectedImageUri = result.assets[0].uri;
+  
+      const formData = new FormData();
+      formData.append("file", { uri: selectedImageUri, type: "image/jpeg", name: "profile.jpg" } as any);
+      formData.append("upload_preset", UPLOAD_PRESET);
+      try {
+        const response = await fetch(
+          "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
+          {
+          method: "POST",
+          body: formData,
+        });
+        const data = await response.json();
+        if (data.secure_url) {
+          const imageUrl = data.secure_url;
+          // set imag uri at use state setNewUser
+           setImage(imageUrl);
+         Toast.show({
+                type: "success",
+                text1: "Image Uploaded successful! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });;
+        } else {
+          Toast.show({
+                type: "error",
+                text1: "Image Uploaded failed! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });
+        }
+      } catch (err) {
+        Toast.show({
+                type: "error",
+                text1: "Failed to Upload Image .....",
+                position: "top",
+                visibilityTime: 3000,
+              });
+      } finally {
+       
+      }
     }
-  }
-};
-
+  };
 // ✅ Save Booking
 const handleSaveBooking = async () => {
+  // Fallback to raw params in case state hasn't updated yet
+  const effectiveCustomerId = customerId ?? coerceParam(rawParams.customerId);
+  const effectiveMeasureId = measureId ?? coerceParam(rawParams.measureId);
+
+  if (!currentUser?.id || !effectiveCustomerId || !effectiveMeasureId) {
+    Toast.show({
+      type: "error",
+      text1: "Missing data",
+      text2: !currentUser?.id
+        ? "User not found"
+        : !effectiveCustomerId
+        ? "Customer is missing"
+        : "Measurement is missing",
+      position: "top",
+    });
+    return;
+  }
   const newBooking = {
     userId: currentUser?.id,
-    customerId: customerId,
-    measurementId: measureId,
-    bookingDate,
-    measurementDate: bookingDate,
-    completionDate,
+    customerId: effectiveCustomerId,
+    measurementId: effectiveMeasureId,
+    bookingDate: bookingDate?.trim() ? bookingDate : formatDate(new Date()),
+    measurementDate: (bookingDate?.trim() ? bookingDate : formatDate(new Date())),
+    completionDate: completionDate?.trim() ? completionDate : formatDate(new Date()),
     stitchingFee: Number(stitchingFee),
     status: "Pending",
     image: image ? [image] : [], // 👈 match schema
@@ -204,18 +290,57 @@ const handleSaveBooking = async () => {
           )} */}
 
           {/* Input Fields */}
-          <TextInput
-            placeholder="Booking Date (YYYY-MM-DD)"
-            value={bookingDate}
-            onChangeText={setBookingDate}
-            style={styles.input}
-          />
-          <TextInput
-            placeholder="Completion Date (YYYY-MM-DD)"
-            value={completionDate}
-            onChangeText={setCompletionDate}
-            style={styles.input}
-          />
+          {Platform.OS === "web" ? (
+            <TextInput
+              placeholder="YYYY-MM-DD"
+              value={bookingDate}
+              onChangeText={setBookingDate}
+              style={styles.input}
+            />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setShowBookingPicker(true)}
+              >
+                <Text>{bookingDate || "Select booking date"}</Text>
+              </TouchableOpacity>
+              {showBookingPicker && (
+                <DateTimePicker
+                  value={bookingDate ? new Date(bookingDate) : new Date()}
+                  mode="date"
+                  display="calendar"
+                  onChange={onChangeBookingDate}
+                />
+              )}
+            </>
+          )}
+
+          {Platform.OS === "web" ? (
+            <TextInput
+              placeholder="YYYY-MM-DD"
+              value={completionDate}
+              onChangeText={setCompletionDate}
+              style={styles.input}
+            />
+          ) : (
+            <>
+              <TouchableOpacity
+                style={styles.input}
+                onPress={() => setShowCompletionPicker(true)}
+              >
+                <Text>{completionDate || "Select completion date"}</Text>
+              </TouchableOpacity>
+              {showCompletionPicker && (
+                <DateTimePicker
+                  value={completionDate ? new Date(completionDate) : new Date()}
+                  mode="date"
+                  display="calendar"
+                  onChange={onChangeCompletionDate}
+                />
+              )}
+            </>
+          )}
           <TextInput
             placeholder="Stitching Fee"
             value={stitchingFee}
@@ -227,7 +352,7 @@ const handleSaveBooking = async () => {
           {/* Image Upload */}
           <TouchableOpacity
             style={[styles.btn, { backgroundColor: "#2563eb" }]}
-            onPress={pickImage}
+            onPress={handleUploadImage}
             disabled={loading}
           >
             <Text style={styles.btnText}>

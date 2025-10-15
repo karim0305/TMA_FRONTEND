@@ -59,7 +59,10 @@ export default function ViewMeasurements() {
   const fetchMeasurements = async () => {
     try {
       const res = await axios.get(MeasurementApi.getMeasurements);
-      dispatch(setMeasurements(res.data.data));
+      const data = Array.isArray(res.data?.data)
+        ? res.data.data.filter(Boolean)
+        : [];
+      dispatch(setMeasurements(data));
     } catch (error) {
       console.error("❌ Error fetching measurements:", error);
       Alert.alert("Error", "Failed to fetch measurements from server.");
@@ -104,19 +107,21 @@ export default function ViewMeasurements() {
     }
   };
 
-  // ✅ Filter by current user's ID
-const filteredMeasurements = measurements.filter((m) => {
-  // Normalize customerId to string
-  const mCustomerId =
-    typeof m.customerId === "object" ? m.customerId?._id : m.customerId;
+  // ✅ Filter by current user's ID (guard against undefined entries)
+const filteredMeasurements = (measurements ?? [])
+  .filter((m): m is Measurement => !!m)
+  .filter((m) => {
+    // Normalize customerId and userId to string
+    const mCustomerId =
+      typeof m.customerId === "object" ? m.customerId?._id : m.customerId;
 
-  const userId = typeof m.UserId === "object" ? m.UserId?._id : m.UserId;
+    const userId = typeof m.UserId === "object" ? m.UserId?._id : m.UserId;
 
-  return (
-    userId?.toString() === currentUser?.id?.toString() &&
-    mCustomerId?.toString() === customerId?.toString()
-  );
-});
+    return (
+      userId?.toString() === currentUser?.id?.toString() &&
+      mCustomerId?.toString() === customerId?.toString()
+    );
+  });
 
   // ✅ Loading state
   if (loading) {

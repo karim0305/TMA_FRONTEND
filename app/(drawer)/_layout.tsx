@@ -20,10 +20,8 @@ export default function Layout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Drawer
-        // ✅ Custom drawer content
         drawerContent={(props) => (
           <DrawerContentScrollView {...props}>
-            {/* Header with profile info */}
             <View
               style={{
                 padding: 20,
@@ -47,7 +45,6 @@ export default function Layout() {
               </Text>
             </View>
 
-            {/* Admin Screens */}
             {currentUser?.role === "Admin" && (
               <>
                 <DrawerItem
@@ -96,7 +93,6 @@ export default function Layout() {
               </>
             )}
 
-            {/* Tailor Screens */}
             {currentUser?.role === "Tailor" && (
               <>
                 <DrawerItem
@@ -138,7 +134,6 @@ export default function Layout() {
               </>
             )}
 
-            {/* Customer Screens */}
             {currentUser?.role === "Customer" && (
               <>
                 <DrawerItem
@@ -162,7 +157,6 @@ export default function Layout() {
               </>
             )}
 
-            {/* Logout */}
             <View style={{ borderTopWidth: 1, borderTopColor: "#ccc" }}>
               <DrawerItem
                 label="Logout"
@@ -175,54 +169,51 @@ export default function Layout() {
             </View>
           </DrawerContentScrollView>
         )}
-        // ✅ Screen options
-        screenOptions={({ navigation, route }) => ({
-          headerShown: true,
-          headerStyle: { backgroundColor: "#f4f4f4" },
-          headerTitleStyle: { fontWeight: "bold", fontSize: 18 },
-          drawerLabelStyle: { fontSize: 16 },
-          drawerStyle: { width: 240 },
-
-          // ✅ Clean titles instead of (drawer)/home
-          headerTitle:
-            route.name === "home"
-              ? "Admin Dashboard"
-              : route.name === "thome"
-              ? "Tailor Dashboard"
-              : route.name === "chome"
-              ? "Customer Dashboard"
-              : route.name === "profile"
-              ? "My Profile"
-              : route.name === "viewtailor"
-              ? "All Tailors"
-              : route.name === "viewcustomer"
-              ? "All Customers"
-              : route.name === "admins"
-              ? "All Users"
-              : route.name === "Bookings"
-              ? "All Bookings"
-              : "Tailor Management",
-
-          // ✅ Hamburger for home, back for others
-          headerLeft: () =>
-            ["home", "thome", "chome"].includes(route.name) ? (
-              <TouchableOpacity
-                onPress={() => navigation.openDrawer()}
-                style={{ marginLeft: 10 }}
-              >
-                <Ionicons name="menu" size={26} color="black" />
-              </TouchableOpacity>
-            ) : (
-              <TouchableOpacity
-                onPress={() => router.back()}
-                style={{ marginLeft: 10 }}
-              >
-                <Ionicons name="arrow-back" size={24} color="black" />
-              </TouchableOpacity>
-            ),
-        })}
+        screenOptions={({ navigation, route }) => {
+          console.log("Route name:", route.name); // Debug route name
+          return {
+            headerShown: true,
+            headerStyle: { backgroundColor: "#f4f4f4" },
+            headerTitleStyle: { fontWeight: "bold", fontSize: 18 },
+            drawerLabelStyle: { fontSize: 16 },
+            drawerStyle: { width: 240 },
+            headerTitle:
+              route.name === "home"
+                ? "Admin Dashboard"
+                : route.name === "thome"
+                ? "Tailor Dashboard"
+                : route.name === "chome"
+                ? "Customer Dashboard"
+                : route.name === "profile"
+                ? "My Profile"
+                : route.name === "viewtailor"
+                ? "All Tailors"
+                : route.name === "viewcustomer"
+                ? "All Customers"
+                : route.name === "admins"
+                ? "All Users"
+                : route.name === "Bookings"
+                ? "All Bookings"
+                : "Tailor Management",
+            headerLeft: () =>
+              ["home", "thome", "chome"].includes(route.name) ? (
+                <TouchableOpacity
+                  onPress={() => navigation.openDrawer()}
+                  style={{ marginLeft: 10 }}
+                >
+                  <Ionicons name="menu" size={26} color="black" />
+                </TouchableOpacity>
+              ) : (
+                <TouchableOpacity
+                  onPress={() => router.back()}
+                  style={{ marginLeft: 10 }}
+                >
+                  <Ionicons name="arrow-back" size={24} color="black" />
+                </TouchableOpacity>
+              ),
+          };
+        }}
       >
-        {/* ✅ Screen definitions */}
         <Drawer.Screen name="home" />
         <Drawer.Screen name="thome" />
         <Drawer.Screen name="chome" />

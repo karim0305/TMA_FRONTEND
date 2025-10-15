@@ -50,47 +50,6 @@ useEffect(() => {
   const CLOUD_NAME = "dzfqgziwl";
   const UPLOAD_PRESET = "tailorImages";
 
-  // Pick image from gallery
- 
-  // 👇 Pick Image
- // 👇 Pick Image
-//  const pickImage = async () => {
-//   const result = await ImagePicker.launchImageLibraryAsync({
-//     mediaTypes: ImagePicker.MediaTypeOptions.Images,
-//     allowsEditing: true,
-//     aspect: [4, 4],
-//     quality: 0.8,
-//     base64: true, // 👈 enable base64
-//   });
-
-//   if (!result.canceled && result.assets.length > 0) {
-//     const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-//     const imageUrl = await uploadToCloudinary(base64Img);
-
-//     setNewUser((prev) => ({
-//       ...prev,
-//       image: imageUrl, // directly save Cloudinary URL
-//     }));
-//   }
-// };
-
-// const uploadToCloudinary = async (file: string) => {
-//   const formData = new FormData();
-//   formData.append("file", file); // 👈 base64 string
-//   formData.append("upload_preset", "tailorImages");
-
-//   try {
-//     const res = await axios.post(
-//       "https://api.cloudinary.com/v1_1/dzfqgziwl/image/upload",
-//       formData
-//     );
-//     return res.data.secure_url;
-//   } catch (err) {
-//     //console.error("❌ Cloudinary Upload Error:", err.response?.data || err.message);
-//     throw new Error("Image upload failed");
-//   }
-// };
-
 const handleUploadImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -121,14 +80,14 @@ const handleUploadImage = async () => {
     }));
          Toast.show({
                 type: "success",
-                text1: "User Added successful! 🎉",
+                text1: "Image Uploaded successful! 🎉",
                 position: "top",
                 visibilityTime: 3000,
               });;
         } else {
           Toast.show({
-                type: "success",
-                text1: "User Added successful! 🎉",
+                type: "error",
+                text1: "Image Uploaded failed! 🎉",
                 position: "top",
                 visibilityTime: 3000,
               });
@@ -136,7 +95,7 @@ const handleUploadImage = async () => {
       } catch (err) {
         Toast.show({
                 type: "error",
-                text1: "Failed .....",
+                text1: "Failed to Upload Image .....",
                 position: "top",
                 visibilityTime: 3000,
               });
@@ -204,6 +163,7 @@ const handleAddUser = async () => {
             <TextInput
               style={styles.input}
               placeholder="Name"
+              placeholderTextColor="#9CA3AF"
               value={newUser.name}
               onChangeText={(text) =>
                 setNewUser((prev) => ({ ...prev, name: text }))
@@ -213,6 +173,7 @@ const handleAddUser = async () => {
             <TextInput
               style={styles.input}
               placeholder="Phone"
+              placeholderTextColor="#9CA3AF"
               value={newUser.phone}
               onChangeText={(text) =>
                 setNewUser((prev) => ({ ...prev, phone: text }))
@@ -222,6 +183,7 @@ const handleAddUser = async () => {
             <TextInput
               style={styles.input}
               placeholder="CNIC"
+              placeholderTextColor="#9CA3AF"
               value={newUser.cnic}
               onChangeText={(text) =>
                 setNewUser((prev) => ({ ...prev, cnic: text }))
@@ -231,6 +193,7 @@ const handleAddUser = async () => {
             <TextInput
               style={styles.input}
               placeholder="Address"
+              placeholderTextColor="#9CA3AF"
               value={newUser.address}
               onChangeText={(text) =>
                 setNewUser((prev) => ({ ...prev, address: text }))
@@ -242,6 +205,7 @@ const handleAddUser = async () => {
               placeholder="Email"
               keyboardType="email-address"
               autoCapitalize="none"
+              placeholderTextColor="#9CA3AF"
               value={newUser.email}
               onChangeText={(text) =>
                 setNewUser((prev) => ({ ...prev, email: text }))
@@ -259,6 +223,7 @@ const handleAddUser = async () => {
       style={styles.input}
       placeholder="Password"
       secureTextEntry
+      placeholderTextColor="#9CA3AF"
       value={newUser.password}
       onChangeText={(text) =>
         setNewUser((prev) => ({ ...prev, password: text }))
@@ -358,6 +323,8 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 10,
     fontSize: 14,
+    backgroundColor: "#FFFFFF",
+    color: "#111827",
   },
   pickerWrapper: {
     borderWidth: 1,

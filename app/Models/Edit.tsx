@@ -45,16 +45,26 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
   }, [tailor]);
 
   // 🔹 Upload to Cloudinary
-  const uploadToCloudinary = async (file: string) => {
+  const uploadToCloudinary = async (uri: string) => {
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append(
+      "file",
+      { uri, type: "image/jpeg", name: "profile.jpg" } as any
+    );
     formData.append("upload_preset", UPLOAD_PRESET);
 
-    const res = await axios.post(
+    const response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
-      formData
+      {
+        method: "POST",
+        body: formData,
+      }
     );
-    return res.data.secure_url;
+    const data = await response.json();
+    if (!response.ok || !data?.secure_url) {
+      throw new Error(data?.error?.message || "Failed to upload image");
+    }
+    return data.secure_url as string;
   };
 
   // 🔹 Image Picker
@@ -62,19 +72,29 @@ export default function Edit({ visible, tailor, onClose }: EditProps) {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [4, 4],
-      quality: 0.8,
-      base64: true,
+      aspect: [1, 1],
+      quality: 1,
     });
 
     if (!result.canceled && result.assets.length > 0) {
       setLoading(true);
       try {
-        const base64Img = `data:image/jpg;base64,${result.assets[0].base64}`;
-        const imageUrl = await uploadToCloudinary(base64Img);
+        const selectedUri = result.assets[0].uri;
+        const imageUrl = await uploadToCloudinary(selectedUri);
         setUpdatedTailor((prev) => ({ ...prev, image: imageUrl }));
+        Toast.show({
+          type: "success",
+          text1: "Image uploaded successfully! 🎉",
+          position: "top",
+          visibilityTime: 3000,
+        });
       } catch (err) {
-        console.error("❌ Image upload failed", err);
+        Toast.show({
+          type: "error",
+          text1: "Image upload failed",
+          position: "top",
+          visibilityTime: 3000,
+        });
       } finally {
         setLoading(false);
       }
