@@ -1,7 +1,8 @@
 import { Ionicons } from "@expo/vector-icons";
-import { DrawerContentScrollView, DrawerItem } from "@react-navigation/drawer";
+import { DrawerContentScrollView, DrawerItem, DrawerToggleButton } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { Drawer } from "expo-router/drawer";
+import * as SecureStore from "expo-secure-store";
 import { Image, Text, TouchableOpacity, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { useDispatch, useSelector } from "react-redux";
@@ -12,8 +13,14 @@ export default function Layout() {
   const { currentUser } = useSelector((state: RootState) => state.users);
   const dispatch = useDispatch();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(logoutUser());
+    try {
+      await SecureStore.deleteItemAsync("token");
+      await SecureStore.deleteItemAsync("user");
+    } catch (e) {
+      // ignore
+    }
     router.replace("/Login");
   };
 
@@ -177,6 +184,7 @@ export default function Layout() {
             headerTitleStyle: { fontWeight: "bold", fontSize: 18 },
             drawerLabelStyle: { fontSize: 16 },
             drawerStyle: { width: 240 },
+            headerBackVisible: false,
             headerTitle:
               route.name === "home"
                 ? "Admin Dashboard"
@@ -197,12 +205,7 @@ export default function Layout() {
                 : "Tailor Management",
             headerLeft: () =>
               ["home", "thome", "chome"].includes(route.name) ? (
-                <TouchableOpacity
-                  onPress={() => navigation.openDrawer()}
-                  style={{ marginLeft: 10 }}
-                >
-                  <Ionicons name="menu" size={26} color="black" />
-                </TouchableOpacity>
+                <DrawerToggleButton tintColor="black" />
               ) : (
                 <TouchableOpacity
                   onPress={() => router.back()}

@@ -1,4 +1,5 @@
 import { SuitBookingApi } from "@/api/apis";
+import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import {
   useLocalSearchParams,
@@ -42,17 +43,32 @@ export default function Bookings() {
   // ✅ Header button
   useLayoutEffect(() => {
     navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity
-          style={BookingStyle.addBtn}
-          onPress={() => {
-            setSelectedBooking(null);
-            setModalVisible(true);
-          }}
-        >
-          <Text style={BookingStyle.addBtnText}>+</Text>
+      headerLeft: () => (
+        <TouchableOpacity onPress={() => router.back()} style={{ marginLeft: 10 }}>
+          <Ionicons name="arrow-back" size={24} color="black" />
         </TouchableOpacity>
       ),
+      headerRight: () => (
+        <TouchableOpacity
+          style={{ marginRight: 10 }}
+          onPress={() => {
+           alert("Notifications")
+          }}
+        >
+          <Ionicons name="notifications-outline" size={24} color="black" />
+        </TouchableOpacity>
+      ),
+      // headerRight: () => (
+      //   <TouchableOpacity
+      //     style={BookingStyle.addBtn}
+      //     onPress={() => {
+      //       setSelectedBooking(null);
+      //       setModalVisible(true);
+      //     }}
+      //   >
+      //     <Text style={BookingStyle.addBtnText}>+</Text>
+      //   </TouchableOpacity>
+      // ),
     });
   }, [navigation]);
 
@@ -70,7 +86,7 @@ export default function Bookings() {
   customerName: b.customerId?.name || "",
   measurementId: b.measurementId?._id || null,
   measurementDate:
-    b.measurementId?.measurementDate || b.measurementDate || "",
+  b.measurementId?.measurementDate || b.measurementDate || "",
   bookingDate: b.bookingDate || "",
   completionDate: b.completionDate || "",
   stitchingFee: b.stitchingFee || 0,

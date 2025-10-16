@@ -36,7 +36,7 @@
 //   },
 // });
 import { Ionicons } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import { router } from "expo-router";
 import React, { useEffect } from "react";
 import { ActivityIndicator, StyleSheet, Text, View } from "react-native";
@@ -45,9 +45,9 @@ export default function SplashScreen() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        // Get token and user info from storage
-        const token = await AsyncStorage.getItem("token");
-        const userData = await AsyncStorage.getItem("user");
+        // Get token and user info from secure storage
+        const token = await SecureStore.getItemAsync("token");
+        const userData = await SecureStore.getItemAsync("user");
 
         // Artificial delay for splash animation
         await new Promise((resolve) => setTimeout(resolve, 1500));

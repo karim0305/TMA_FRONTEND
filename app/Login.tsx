@@ -2,6 +2,7 @@ import { AuthApi } from "@/api/apis";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { router } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Appearance,
@@ -46,16 +47,35 @@ const HandleLogin = async (): Promise<void> => {
   }
 
   try {
-    setLoading(true);
+    dispatch(setLoading(true));
 
     const res = await axios.post(AuthApi.Login, { email, password });
 
     if (res.data.access_token) {
       const user = res.data.user;
 
-      // ✅ Save to AsyncStorage
-      // await AsyncStorage.setItem("token", res.data.access_token);
-      // await AsyncStorage.setItem("user", JSON.stringify(user));
+      // ✅ Save securely
+      let SecureStore: any = null;
+      try {
+        // Dynamically require to avoid crashes when module is missing or on web
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        SecureStore = require("expo-secure-store");
+      } catch {}
+
+      try {
+        const secureAvailable = await (SecureStore?.isAvailableAsync?.() ?? Promise.resolve(false));
+        if (secureAvailable) {
+          await SecureStore.setItemAsync("token", res.data.access_token);
+          await SecureStore.setItemAsync("user", JSON.stringify(user));
+        } else {
+          await AsyncStorage.setItem("token", res.data.access_token);
+          await AsyncStorage.setItem("user", JSON.stringify(user));
+        }
+      } catch {
+        // Any failure in secure write falls back to AsyncStorage
+        await AsyncStorage.setItem("token", res.data.access_token);
+        await AsyncStorage.setItem("user", JSON.stringify(user));
+      }
 
       // ✅ Save to Redux
       dispatch(
@@ -179,7 +199,7 @@ const HandleLogin = async (): Promise<void> => {
       });
     }
   } finally {
-    setLoading(false);
+    dispatch(setLoading(false));
   }
 };
 
