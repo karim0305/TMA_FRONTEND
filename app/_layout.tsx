@@ -1,3 +1,5 @@
+import "react-native-gesture-handler";
+import "react-native-reanimated";
 import { Stack } from "expo-router";
 import { Provider } from "react-redux";
 import { persistor, store } from "./redux/store"; // 👈 apna store import

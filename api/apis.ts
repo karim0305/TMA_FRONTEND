@@ -1,10 +1,13 @@
-// const baseUrl = "http://localhost:3010/tmaapi";
+//const baseUrl = "http://localhost:3010/tmaapi";
 const baseUrl = "https://tma-backend-liart.vercel.app/tmaapi";
 
 
 
 export const AuthApi = {
   Login: `${baseUrl}/auth/login`,
+  ForgotPasswordSendOtp: `${baseUrl}/auth/forgot/send-otp`,
+  ForgotPasswordVerifyOtp: `${baseUrl}/auth/forgot/verify-otp`,
+  ForgotPasswordReset: `${baseUrl}/auth/forgot/reset`,
 };
 
 

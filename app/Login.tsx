@@ -1,8 +1,8 @@
 import { AuthApi } from "@/api/apis";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { router } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useState } from "react";
 import {
   Appearance,
@@ -18,11 +18,13 @@ import {
 import Toast from "react-native-toast-message";
 import { useDispatch } from "react-redux";
 import Add from "./Models/add";
+import ForgotPassword from "./Models/ForgotPassword";
+import VerifyOtp from "./Models/VerifyOtp";
 import { addUser, setCurrentUser, setLoading, User } from "./redux/slices/userSlice";
 import { loginStyles } from "./styles/LoginStyle";
 
 
-export type user = {
+export type user = {  
   id: string;
   Name: string;
   Email: string;
@@ -204,7 +206,9 @@ const HandleLogin = async (): Promise<void> => {
 };
 
 
-
+ const ForgetPassword = () => {
+   setIsForgotVisible(true);
+ }
 
   const handleAddAdmin = (newAdmin: User) => {
     dispatch(
@@ -237,6 +241,9 @@ const HandleLogin = async (): Promise<void> => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isSignUpVisible, setIsSignUpVisible] = useState(false);
+  const [isForgotVisible, setIsForgotVisible] = useState(false);
+  const [isOtpVisible, setIsOtpVisible] = useState(false);
+  const [otpEmail, setOtpEmail] = useState("");
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(({ colorScheme }) => {
@@ -297,7 +304,7 @@ const HandleLogin = async (): Promise<void> => {
           </TouchableOpacity>
 
           {/* Forgot Password link */}
-          <TouchableOpacity>
+          <TouchableOpacity onPress={ForgetPassword}>
             <Text style={loginStyles.linkText}>Forgot Password?</Text>
           </TouchableOpacity>
 
@@ -317,6 +324,24 @@ const HandleLogin = async (): Promise<void> => {
         visible={isSignUpVisible}
         onClose={() => setIsSignUpVisible(false)}
         onAdd={handleAddAdmin}
+      />
+      <ForgotPassword
+        visible={isForgotVisible}
+        onClose={() => setIsForgotVisible(false)}
+        onOtpSent={(em) => {
+          setOtpEmail(em);
+          setIsForgotVisible(false);
+          setIsOtpVisible(true);
+        }}
+      />
+      <VerifyOtp
+        visible={isOtpVisible}
+        email={otpEmail}
+        onClose={() => setIsOtpVisible(false)}
+        onResetDone={() => {
+          setIsOtpVisible(false);
+          Toast.show({ type: "success", text1: "You can now login with your new password", position: "top" });
+        }}
       />
     </View>
       </ScrollView>
