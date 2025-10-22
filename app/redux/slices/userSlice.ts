@@ -14,6 +14,7 @@ export interface User {
   status?: "Active" | "Inactive";
   password?: string; 
   token?:string;
+  createdAt?: string;
 }
 
 interface UserState {

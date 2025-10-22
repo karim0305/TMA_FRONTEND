@@ -10,7 +10,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
-  View
+  View,
 } from "react-native";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
@@ -46,25 +46,21 @@ interface Props {
   visible: boolean;
   measurement: Measurement;
   onClose: () => void;
-
 }
 
 export default function MeasurementModal({ visible, measurement, onClose }: Props) {
   const params = useLocalSearchParams();
- const customerId = Array.isArray(params.customerId)
-  ? params.customerId[0]
-  : params.customerId;
+  const customerId = Array.isArray(params.customerId)
+    ? params.customerId[0]
+    : params.customerId;
   const dispatch = useDispatch();
 
-  // ✅ Get current user from Redux
   const { currentUser } = useSelector((state: RootState) => state.users);
   const UserId = currentUser?.id;
-  // console.log("User Ids......"+UserId);
-  //  console.log("Customerid... "+customerId)
-  // ✅ Local state for measurement form
-  const [localMeasurement, setLocalMeasurement] = useState<Measurement>(measurement);
 
+  const [localMeasurement, setLocalMeasurement] = useState<Measurement>(measurement);
   const [showDatePicker, setShowDatePicker] = useState(false);
+
   const formatDate = (d: Date) => d.toISOString().split("T")[0];
   const onChangeDate = (_: any, selectedDate?: Date) => {
     setShowDatePicker(false);
@@ -73,81 +69,75 @@ export default function MeasurementModal({ visible, measurement, onClose }: Prop
     }
   };
 
-  // ✅ Keep measurement updated when modal opens
-useEffect(() => {
-  if (customerId) {
-    setLocalMeasurement((prev) => ({
-      ...prev,
-      customerId,
-    }));
-  }
-}, [customerId]);
+  useEffect(() => {
+    if (customerId) {
+      setLocalMeasurement((prev) => ({
+        ...prev,
+        customerId,
+      }));
+    }
+  }, [customerId]);
 
-  // ✅ Ensure a default date exists (today) when modal opens
   useEffect(() => {
     setLocalMeasurement((prev) => ({
       ...prev,
-      date: prev.date && prev.date.trim() ? prev.date : formatDate(new Date()),
+      date: prev.date?.trim() ? prev.date : formatDate(new Date()),
     }));
-    // run once on mount open
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ✅ Save handler
   const handleSave = async () => {
+    if (!UserId) {
+      alert("⚠️ No logged-in user found!");
+      return;
+    }
+
+    const ensuredDate = localMeasurement.date?.trim()
+      ? localMeasurement.date
+      : formatDate(new Date());
+
+    const dataToSend = {
+      ...localMeasurement,
+      date: ensuredDate,
+      UserId,
+      customerId: localMeasurement.customerId,
+    };
+
     try {
-      if (!UserId) {
-        alert("⚠️ No logged-in user found!");
-        return;
-      }
-
-      // Ensure date is present; default to today if missing
-      const ensuredDate = localMeasurement.date && localMeasurement.date.trim()
-        ? localMeasurement.date
-        : formatDate(new Date());
-
-      const dataToSend = {
-        ...localMeasurement,
-        date: ensuredDate,
-        UserId,
-        customerId: localMeasurement.customerId,
-      };
-
       const res = await axios.post(MeasurementApi.addMeasurement, dataToSend);
 
       if (res?.data) {
-          Toast.show({
-                    type: "success",
-                    text1: "Measurement added successful! 🎉",
-                    position: "top",
-                    visibilityTime: 3000,
-                  });
-        console.log("✅ Measurement saved successfully:", res.data);
+        Toast.show({
+          type: "success",
+          text1: "Measurement added successfully 🎉",
+          position: "top",
+          visibilityTime: 3000,
+        });
+
         dispatch(addMeasurement(res.data.data));
-         // 🔹 Clear all measurement fields
-  setLocalMeasurement({
-    date: formatDate(new Date()),
-    Chest: "",
-    Waist: "",
-    Length: "",
-  Hips:"",
-  Shoulder: "",
-  Sleeve: "",
-  Bicep: "",
-  Wrist: "",
-  Neck: "",
-  Armhole: "",
-  TrouserWaist:"",
-  TrouserLength: "",
-  Thigh: "",
-  Knee: "",
-  Bottom:"",
-  Inseam: "",
-  Rise: "",
-  WaistcoatLength: "",
-    // UserId: "",
-  customerId:  localMeasurement.customerId, 
-  });
+
+        setLocalMeasurement({
+          date: formatDate(new Date()),
+          Chest: "",
+          Waist: "",
+          Length: "",
+          Hips: "",
+          Shoulder: "",
+          Sleeve: "",
+          Bicep: "",
+          Wrist: "",
+          Neck: "",
+          Armhole: "",
+          TrouserWaist: "",
+          TrouserLength: "",
+          Thigh: "",
+          Knee: "",
+          Bottom: "",
+          Inseam: "",
+          Rise: "",
+          WaistcoatLength: "",
+          customerId: localMeasurement.customerId,
+        });
+
         onClose();
       }
     } catch (error) {
@@ -155,15 +145,28 @@ useEffect(() => {
     }
   };
 
+  const renderField = (label: string, key: keyof Measurement, placeholder: string) => (
+    <View style={MeasurementStyle.row}>
+      <Text style={MeasurementStyle.label}>{label}:</Text>
+      <TextInput
+        placeholder={placeholder}
+        style={MeasurementStyle.inputField}
+        keyboardType="numeric"
+        value={localMeasurement[key]}
+        onChangeText={(text) => setLocalMeasurement({ ...localMeasurement, [key]: text })}
+      />
+    </View>
+  );
+
   return (
     <Modal visible={visible} transparent animationType="slide">
       <View style={MeasurementStyle.modalOverlay}>
         <ScrollView style={MeasurementStyle.modalContainer}>
-          <Text style={MeasurementStyle.modalTitle}>Measurement</Text>
+          <Text style={MeasurementStyle.modalTitle}>پیمائش کا فارم</Text>
 
           {/* Date */}
           <View style={MeasurementStyle.row}>
-            <Text style={MeasurementStyle.label}>Date:</Text>
+            <Text style={MeasurementStyle.label}>تاریخ:</Text>
             {Platform.OS === "web" ? (
               <TextInput
                 placeholder="YYYY-MM-DD"
@@ -179,11 +182,15 @@ useEffect(() => {
                   style={MeasurementStyle.inputField}
                   onPress={() => setShowDatePicker(true)}
                 >
-                  <Text>{localMeasurement.date || "Select date"}</Text>
+                  <Text>{localMeasurement.date || "تاریخ منتخب کریں"}</Text>
                 </TouchableOpacity>
                 {showDatePicker && (
                   <DateTimePicker
-                    value={localMeasurement.date ? new Date(localMeasurement.date) : new Date()}
+                    value={
+                      localMeasurement.date
+                        ? new Date(localMeasurement.date)
+                        : new Date()
+                    }
                     mode="date"
                     display="calendar"
                     onChange={onChangeDate}
@@ -192,28 +199,33 @@ useEffect(() => {
               </>
             )}
           </View>
- 
-          {/* Other fields */}
-          {Object.keys(localMeasurement)
-            .filter((key) => !["date", "UserId", "customerId"].includes(key))
-            .map((key) => (
-              <View style={MeasurementStyle.row} key={key}>
-                <Text style={MeasurementStyle.label}>{key}:</Text>
-                <TextInput
-                  placeholder={key}
-                  style={MeasurementStyle.inputField}
-                  keyboardType="numeric"
-                  value={(localMeasurement as any)[key]}
-                  onChangeText={(text) =>
-                    setLocalMeasurement({ ...localMeasurement, [key]: text })
-                  }
-                />
-              </View>
-            ))}
+
+          {/* Urdu Fields */}
+          {renderField("سینہ", "Chest", "سینہ")}
+          {renderField("کمر", "Waist", "کمر")}
+          {renderField("لمبائی", "Length", "لمبائی")}
+          {renderField("کولہے", "Hips", "کولہے")}
+          {renderField("کندھا", "Shoulder", "کندھا")}
+          {renderField("آستین", "Sleeve", "آستین")}
+          {renderField("بازو", "Bicep", "بازو")}
+          {renderField("کلائی", "Wrist", "کلائی")}
+          {renderField("گردن", "Neck", "گردن")}
+          {renderField("آرم ہول", "Armhole", "آرم ہول")}
+          {renderField("پاجامہ کمر", "TrouserWaist", "پاجامہ کمر")}
+          {renderField("پاجامہ لمبائی", "TrouserLength", "پاجامہ لمبائی")}
+          {renderField("ران", "Thigh", "ران")}
+          {renderField("گھٹنا", "Knee", "گھٹنا")}
+          {renderField("باٹم", "Bottom", "باٹم")}
+          {renderField("انسیم", "Inseam", "انسیم")}
+          {renderField("رائز", "Rise", "رائز")}
+          {renderField("ویسٹ کوٹ لمبائی", "WaistcoatLength", "ویسٹ کوٹ لمبائی")}
 
           {/* Buttons */}
           <View style={MeasurementStyle.buttonRow}>
-            <TouchableOpacity style={[MeasurementStyle.btn, { backgroundColor: "#000" }]} onPress={handleSave}>
+            <TouchableOpacity
+              style={[MeasurementStyle.btn, { backgroundColor: "#000" }]}
+              onPress={handleSave}
+            >
               <Text style={MeasurementStyle.btnText}>Save</Text>
             </TouchableOpacity>
             <TouchableOpacity

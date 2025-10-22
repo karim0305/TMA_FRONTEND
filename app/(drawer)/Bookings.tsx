@@ -23,6 +23,7 @@ import {
   setBookings,
   setSuitBookingError,
   updateSuitBooking,
+  setSuitBookingLoading,
 } from "../redux/slices/suitBookingSlice";
 import { RootState } from "../redux/store";
 import { BookingStyle } from "../styles/BookingStyle";
@@ -75,13 +76,13 @@ export default function Bookings() {
   // ✅ Fetch bookings from API (with user/customer/measurement populated)
   const GetBookingsWithName = async () => {
     try {
+      dispatch(setSuitBookingLoading(true));
       const res = await axios.get(SuitBookingApi.getBookingswithname);
 
       if (res.data.success) {
      const mapped = res.data.data.map((b: any, index: number) => ({
   id: b._id || index.toString(),
   userId: b.userId?._id || null,
-  userName: b.userId?.name || "",
   customerId: b.customerId?._id || null,
   customerName: b.customerId?.name || "",
   measurementId: b.measurementId?._id || null,
@@ -109,6 +110,9 @@ export default function Bookings() {
     } catch (err: any) {
       console.error("❌ Error fetching bookings:", err.message);
       dispatch(setSuitBookingError("Failed to fetch bookings"));
+    }
+    finally {
+      dispatch(setSuitBookingLoading(false));
     }
   };
 

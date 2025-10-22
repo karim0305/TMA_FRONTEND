@@ -1,10 +1,103 @@
-import React from "react";
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import { useSelector } from "react-redux";
+import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { useDispatch, useSelector } from "react-redux";
+import { SuitBookingApi, UserApi } from "@/api/apis";
+import { setBookings, setSuitBookingError, setSuitBookingLoading, SuitBooking } from "../redux/slices/suitBookingSlice";
+import { setUsers, User } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
 
 export default function TailorDashboard() {
-  const { currentUser } = useSelector((state: RootState) => state.users);
+  const dispatch = useDispatch();
+  const currentUser = useSelector<RootState, User | null>((state) => state.users.currentUser);
+  const allUsers = useSelector<RootState, User[]>((state) => state.users.list);
+  const allBookings = useSelector<RootState, SuitBooking[]>((state) => state.booking.list);
+
+  const [stats, setStats] = useState({
+    totalBookings: 0,
+    completedOrders: 0,
+    pendingOrders: 0,
+    totalCustomers: 0,
+  });
+
+  // Fetch Bookings
+  const GetBookingsWithName = async () => {
+    try {
+      dispatch(setSuitBookingLoading(true));
+      const res = await axios.get(SuitBookingApi.getBookingswithname);
+
+      if (res.data.success) {
+        const mapped = res.data.data.map((b: any, index: number) => ({
+          id: b._id || index.toString(),
+          userId: b.userId?._id || null,
+          customerId: b.customerId?._id || null,
+          customerName: b.customerId?.name || "",
+          measurementId: b.measurementId?._id || null,
+          measurementDate: b.measurementId?.measurementDate || b.measurementDate || "",
+          bookingDate: b.bookingDate || "",
+          completionDate: b.completionDate || "",
+          stitchingFee: b.stitchingFee || 0,
+          status: ["Pending", "In Progress", "Completed", "Cancelled"].includes(b.status)
+            ? (b.status as "Pending" | "In Progress" | "Completed" | "Cancelled")
+            : "Pending",
+          image: Array.isArray(b.image) ? b.image : [],
+          createdAt: b.createdAt || "",
+          updatedAt: b.updatedAt || "",
+        }));
+
+        dispatch(setBookings(mapped));
+        console.log("✅ Bookings fetched:", mapped);
+      } else {
+        console.log("⚠️ Failed to fetch:", res.data.message);
+        dispatch(setSuitBookingError(res.data.message));
+      }
+    } catch (err: any) {
+      console.error("❌ Error fetching bookings:", err.message);
+      dispatch(setSuitBookingError("Failed to fetch bookings"));
+    } finally {
+      dispatch(setSuitBookingLoading(false));
+    }
+  };
+
+  // Fetch Users
+  const GetUser = async () => {
+    try {
+      const res = await axios.get(UserApi.getUsers);
+      const mapped = res.data.map((u: any, index: number) => ({
+        id: u._id || index.toString(),
+        name: u.name,
+        email: u.email,
+        phone: u.phone,
+        cnic: u.cnic,
+        address: u.address,
+        role: u.role,
+        image: u.image,
+      }));
+      dispatch(setUsers(mapped));
+      console.log("Mapped Users:", mapped);
+    } catch (err) {
+      console.error("Error fetching users:", err);
+    }
+  };
+
+  useEffect(() => {
+    GetBookingsWithName();
+    GetUser();
+  }, []);
+
+  useEffect(() => {
+    const totalBookings = allBookings.length;
+    const completedOrders = allBookings.filter(b => b.status === "Completed").length;
+    const pendingOrders = allBookings.filter(b => b.status === "Pending").length;
+    const totalCustomers = allUsers.filter(u => u.role === "Customer").length;
+
+    setStats({
+      totalBookings,
+      completedOrders,
+      pendingOrders,
+      totalCustomers,
+    });
+  }, [allBookings, allUsers]);
 
   return (
     <ScrollView style={styles.container}>
@@ -14,12 +107,10 @@ export default function TailorDashboard() {
       {/* Stats Section */}
       <View style={styles.cardGrid}>
         {[
-          { title: "Total Bookings", value: "54", color: "#2563eb" },
-          { title: "Completed Orders", value: "35", color: "#16a34a" },
-          { title: "Pending Orders", value: "19", color: "#f97316" },
-          { title: "Active Customers", value: "22", color: "#7c3aed" },
-          { title: "Measurements Taken", value: "68", color: "#4f46e5" },
-          { title: "Upcoming Deliveries", value: "7", color: "#dc2626" },
+          { title: "Total Bookings", value: String(stats.totalBookings), color: "#2563eb" },
+          { title: "Completed Orders", value: String(stats.completedOrders), color: "#16a34a" },
+          { title: "Pending Orders", value: String(stats.pendingOrders), color: "#f97316" },
+          { title: "Total Customers", value: String(stats.totalCustomers), color: "#7c3aed" },
         ].map((item, index) => (
           <View key={index} style={styles.card}>
             <View style={styles.cardHeader}>
@@ -48,27 +139,6 @@ export default function TailorDashboard() {
             </View>
           </View>
         ))}
-      </View>
-
-      {/* Quick Actions */}
-      <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>⚡ Quick Actions</Text>
-        <View style={styles.quickGrid}>
-          {[
-            { label: "Add Customer", desc: "Register a new customer", color: "#2563eb" },
-            { label: "Add Measurement", desc: "Record new measurements", color: "#16a34a" },
-            { label: "Add Booking", desc: "Create a new suit booking", color: "#f97316" },
-            { label: "View Bookings", desc: "Check all your orders", color: "#4f46e5" },
-            { label: "Pending Orders", desc: "View all pending suits", color: "#7c3aed" },
-            { label: "Completed Orders", desc: "Review finished orders", color: "#dc2626" },
-          ].map((action, index) => (
-            <TouchableOpacity key={index} style={styles.quickItem}>
-              <View style={[styles.quickIcon, { backgroundColor: action.color }]} />
-              <Text style={styles.quickLabel}>{action.label}</Text>
-              <Text style={styles.quickDesc}>{action.desc}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
 
       {/* Customer Feedback */}
@@ -125,17 +195,4 @@ const styles = StyleSheet.create({
   smallDot: { width: 8, height: 8, borderRadius: 4, marginRight: 10 },
   activityText: { fontSize: 14, fontWeight: "500" },
   activityTime: { fontSize: 12, color: "#6b7280" },
-  quickGrid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  quickItem: {
-    width: "48%",
-    backgroundColor: "#fff",
-    borderRadius: 10,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: "#d1d5db",
-    marginBottom: 12,
-  },
-  quickIcon: { width: 24, height: 24, borderRadius: 4, marginBottom: 8 },
-  quickLabel: { fontWeight: "600", color: "#111827" },
-  quickDesc: { fontSize: 12, color: "#6b7280" },
 });

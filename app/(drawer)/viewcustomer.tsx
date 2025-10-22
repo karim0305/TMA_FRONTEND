@@ -54,7 +54,7 @@ export default function ViewCustomers() {
     });
   }, [navigation]);
 
-  
+
 
   // ✅ Fetch customers when current user is available
   useEffect(() => {
@@ -81,6 +81,7 @@ export default function ViewCustomers() {
         cnic: u.cnic,
         address: u.address,
         role: u.role,
+        status: u.status,
         image: u.image,
         chest: u.chest,
         waist: u.waist,
@@ -122,14 +123,30 @@ export default function ViewCustomers() {
   };
 
   // ✅ Filter customers
-const filteredCustomers = Array.isArray(users)
-  ? users.filter((c) => {
-      const query = search?.toLowerCase() || "";
-      const isAdmin = currentUser?.role?.toLowerCase() === "admin";
+  // const filteredCustomers = Array.isArray(users)
+  //   ? users.filter((c) => {
+  //       const query = search?.toLowerCase() || "";
+  //       const isAdmin = currentUser?.role?.toLowerCase() === "admin";
 
+  //       return (
+  //         c.role?.toLowerCase() === "customer" &&
+  //         (isAdmin || c.UserId === currentUser?._id || c.UserId === currentUser?.id) &&
+  //         (
+  //           (c.name?.toLowerCase() || "").includes(query) ||
+  //           (c.email?.toLowerCase() || "").includes(query) ||
+  //           (c.phone || "").includes(search || "")
+  //         )
+  //       );
+  //     })
+  //   : [];
+
+
+
+  const filteredCustomers = Array.isArray(users)
+    ? users.filter((c) => {
+      const query = search?.toLowerCase() || "";
       return (
-        c.role?.toLowerCase() === "customer" &&
-        (isAdmin || c.UserId === currentUser?._id || c.UserId === currentUser?.id) &&
+        c.status?.toLowerCase() === "active" &&
         (
           (c.name?.toLowerCase() || "").includes(query) ||
           (c.email?.toLowerCase() || "").includes(query) ||
@@ -137,8 +154,9 @@ const filteredCustomers = Array.isArray(users)
         )
       );
     })
-  : [];
+    : [];
 
+    
 
   // ✅ UI
   return (
@@ -208,29 +226,43 @@ const filteredCustomers = Array.isArray(users)
               </View>
 
               {/* Actions */}
-              <View style={styles.actions}>
-                <TouchableOpacity
-                  style={[styles.btn, { backgroundColor: "black" }]}
-                  onPress={() => {
-                    setSelectedCustomer(item);
-                    setEditModalVisible(true);
-                  }}
-                >
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-    <Ionicons name="create-outline" size={20} color="#fff" />
-    <Text style={styles.btnText}>Edit</Text>
-  </View>
-                </TouchableOpacity>
 
-                <TouchableOpacity
-                  style={[styles.btn, { backgroundColor: "#ef4444" }]}
-                  onPress={() => handleDelete(item.id)}
-                >
-                   <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-    <Ionicons name="trash-outline" size={20} color="#fff" />
-    <Text style={styles.btnText}>Delete</Text>
-  </View>
-                </TouchableOpacity>
+
+
+
+              <View style={styles.actions}>
+               
+               
+               
+{(currentUser?.role?.toLowerCase() === "admin" || item.UserId === currentUser?.id || item.UserId === currentUser?._id) && (
+  <>
+    <TouchableOpacity
+      style={[styles.btn, { backgroundColor: "black" }]}
+      onPress={() => {
+        setSelectedCustomer(item);
+        setEditModalVisible(true);
+      }}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Ionicons name="create-outline" size={20} color="#fff" />
+        <Text style={styles.btnText}>Edit</Text>
+      </View>
+    </TouchableOpacity>
+
+    <TouchableOpacity
+      style={[styles.btn, { backgroundColor: "#ef4444" }]}
+      onPress={() => handleDelete(item.id)}
+    >
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+        <Ionicons name="trash-outline" size={20} color="#fff" />
+        <Text style={styles.btnText}>Delete</Text>
+      </View>
+    </TouchableOpacity>
+  </>
+)}
+
+
+
 
                 <TouchableOpacity
                   style={[styles.btn, { backgroundColor: "#3b82f6" }]}
@@ -241,10 +273,10 @@ const filteredCustomers = Array.isArray(users)
                   }}
                 >
 
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
-    <Ionicons name="resize-outline" size={20} color="#fff" />
-    <Text style={styles.btnText}>Measure</Text>
-  </View>
+                  <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                    <Ionicons name="resize-outline" size={20} color="#fff" />
+                    <Text style={styles.btnText}>Measure</Text>
+                  </View>
                 </TouchableOpacity>
               </View>
             </View>

@@ -208,7 +208,28 @@ export default function Layout() {
                 <DrawerToggleButton tintColor="black" />
               ) : (
                 <TouchableOpacity
-                  onPress={() => router.back()}
+                  onPress={() => {
+                    const state: any = navigation.getState?.();
+                    const routeNames: string[] =
+                      (state?.routeNames as string[]) ||
+                      (state?.routes?.map((r: any) => r?.name).filter(Boolean) as string[]) ||
+                      [];
+                    const target = routeNames.includes("thome")
+                      ? "thome"
+                      : routeNames.includes("chome")
+                      ? "chome"
+                      : routeNames.includes("home")
+                      ? "home"
+                      : undefined;
+                    if (target) {
+                      navigation.reset({
+                        index: 0,
+                        routes: [{ name: target }],
+                      });
+                    } else {
+                      router.back();
+                    }
+                  }}
                   style={{ marginLeft: 10 }}
                 >
                   <Ionicons name="arrow-back" size={24} color="black" />

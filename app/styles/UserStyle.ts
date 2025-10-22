@@ -82,3 +82,5 @@ icon: {
   marginRight: 6,
 },
 });
+
+export default function UserStyleRoute() { return null; }

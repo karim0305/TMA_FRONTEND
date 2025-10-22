@@ -15,7 +15,7 @@ export interface SuitBooking {
   completionDate: string;
   stitchingFee: number;
   status: BookingStatus;
-  image: string | null;
+  image: string[];
   createdAt?: string;
   updatedAt?: string;
 }

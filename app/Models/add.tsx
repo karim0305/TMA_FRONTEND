@@ -157,126 +157,127 @@ const handleAddUser = async () => {
     <Modal visible={visible} animationType="slide" transparent>
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
-          <Text style={styles.modalHeading}>Register</Text>
+        <Text style={styles.modalHeading}>رجسٹر کریں</Text>
 
           <ScrollView>
-            <TextInput
-              style={styles.input}
-              placeholder="Name"
-              placeholderTextColor="#9CA3AF"
-              value={newUser.name}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, name: text }))
-              }
-            />
+  <TextInput
+    style={styles.input}
+    placeholder="نام"
+    placeholderTextColor="#9CA3AF"
+    value={newUser.name}
+    onChangeText={(text) =>
+      setNewUser((prev) => ({ ...prev, name: text }))
+    }
+  />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Phone"
-              placeholderTextColor="#9CA3AF"
-              value={newUser.phone}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, phone: text }))
-              }
-            />
+  <TextInput
+    style={styles.input}
+    placeholder="فون نمبر"
+    placeholderTextColor="#9CA3AF"
+    value={newUser.phone}
+    onChangeText={(text) =>
+      setNewUser((prev) => ({ ...prev, phone: text }))
+    }
+  />
 
-            <TextInput
-              style={styles.input}
-              placeholder="CNIC"
-              placeholderTextColor="#9CA3AF"
-              value={newUser.cnic}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, cnic: text }))
-              }
-            />
+  <TextInput
+    style={styles.input}
+    placeholder="شناختی کارڈ نمبر"
+    placeholderTextColor="#9CA3AF"
+    value={newUser.cnic}
+    onChangeText={(text) =>
+      setNewUser((prev) => ({ ...prev, cnic: text }))
+    }
+  />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Address"
-              placeholderTextColor="#9CA3AF"
-              value={newUser.address}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, address: text }))
-              }
-            />
+  <TextInput
+    style={styles.input}
+    placeholder="پتہ"
+    placeholderTextColor="#9CA3AF"
+    value={newUser.address}
+    onChangeText={(text) =>
+      setNewUser((prev) => ({ ...prev, address: text }))
+    }
+  />
 
-            <TextInput
-              style={styles.input}
-              placeholder="Email"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              placeholderTextColor="#9CA3AF"
-              value={newUser.email}
-              onChangeText={(text) =>
-                setNewUser((prev) => ({ ...prev, email: text }))
-              }
-            />
+  <TextInput
+    style={styles.input}
+    placeholder="ای میل"
+    keyboardType="email-address"
+    autoCapitalize="none"
+    placeholderTextColor="#9CA3AF"
+    value={newUser.email}
+    onChangeText={(text) =>
+      setNewUser((prev) => ({ ...prev, email: text }))
+    }
+  />
 
-         
+  {/* Show Role Dropdown only if current user is Admin */}
 
-           {/* Show Role Dropdown only if current user is Admin */}
-
-{currentUser?.role === "Admin" ? (
-  // 👑 Admin: Show Password + Full Role Picker
-  <View style={{ borderWidth: 1, borderColor: "#ccc", borderRadius: 6, marginBottom: 10, backgroundColor: "#fff" }}>
-    <TextInput
-      style={styles.input}
-      placeholder="Password"
-      secureTextEntry
-      placeholderTextColor="#9CA3AF"
-      value={newUser.password}
-      onChangeText={(text) =>
-        setNewUser((prev) => ({ ...prev, password: text }))
-      }
-    />
-
-    <Picker
-      selectedValue={newUser.role}
-      onValueChange={(value) =>
-        setNewUser((prev) => ({ ...prev, role: value }))
-      }
+  {currentUser?.role === "Admin" ? (
+    <View
+      style={{
+        borderWidth: 1,
+        borderColor: "#ccc",
+        borderRadius: 6,
+        marginBottom: 10,
+        backgroundColor: "#fff",
+      }}
     >
-      <Picker.Item label="Select Role" value="" />
-      <Picker.Item label="Admin" value="Admin" />
-      <Picker.Item label="Tailor" value="Tailor" />
-      <Picker.Item label="Customer" value="Customer" />
-    </Picker>
-  </View>
-) : currentUser?.role === "Tailor" ? (
-  // ✂️ Tailor logged in → Hide both password and role picker
-  null
-) : (
-  // 🆕 No currentUser (Sign-up)
-  <View style={styles.pickerWrapper}>
-    <Picker
-      selectedValue={newUser.role}
-      onValueChange={(value) =>
-        setNewUser((prev) => ({ ...prev, role: value }))
-      }
-    >
-      <Picker.Item label="Tailor" value="Tailor" />
-    
-    </Picker>
-  </View>
-)}
+      <TextInput
+        style={styles.input}
+        placeholder="پاس ورڈ"
+        secureTextEntry
+        placeholderTextColor="#9CA3AF"
+        value={newUser.password}
+        onChangeText={(text) =>
+          setNewUser((prev) => ({ ...prev, password: text }))
+        }
+      />
 
-            <TouchableOpacity
-        style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
-        onPress={handleUploadImage}
+      <Picker
+        selectedValue={newUser.role}
+        onValueChange={(value) =>
+          setNewUser((prev) => ({ ...prev, role: value }))
+        }
       >
-        <Text style={styles.btnText}>Pick Image</Text>
-      </TouchableOpacity>
+        <Picker.Item label="رول منتخب کریں" value="" />
+        <Picker.Item label="ایڈمن" value="Admin" />
+        <Picker.Item label="درزی" value="Tailor" />
+        <Picker.Item label="کسٹمر" value="Customer" />
+      </Picker>
+    </View>
+  ) : currentUser?.role === "Tailor" ? null : (
+    <View style={styles.pickerWrapper}>
+      <Picker
+        selectedValue={newUser.role}
+        onValueChange={(value) =>
+          setNewUser((prev) => ({ ...prev, role: value }))
+        }
+      >
+        <Picker.Item label="درزی" value="Tailor" />
+      </Picker>
+    </View>
+  )}
 
-      {/* Preview Selected Image */}
-      {newUser.image ? (
-        <View style={{ alignItems: "center", marginBottom: 10 }}>
-          <Image
-            source={{ uri: newUser.image }}
-            style={{ width: 80, height: 80, borderRadius: 8 }}
-          />
-        </View>
-      ) : null}
-          </ScrollView>
+  <TouchableOpacity
+    style={[styles.btn, { backgroundColor: "#3b82f6", marginBottom: 10 }]}
+    onPress={handleUploadImage}
+  >
+    <Text style={styles.btnText}>تصویر منتخب کریں</Text>
+  </TouchableOpacity>
+
+  {/* Preview Selected Image */}
+  {newUser.image ? (
+    <View style={{ alignItems: "center", marginBottom: 10 }}>
+      <Image
+        source={{ uri: newUser.image }}
+        style={{ width: 80, height: 80, borderRadius: 8 }}
+      />
+    </View>
+  ) : null}
+</ScrollView>
+
 
           <View style={styles.modalActions}>
             <TouchableOpacity

@@ -61,3 +61,4 @@ export const EditUserStyle = StyleSheet.create({
     fontSize: 13,
   },
 });
+export default function EditUserStyleRoute() { return null; }
