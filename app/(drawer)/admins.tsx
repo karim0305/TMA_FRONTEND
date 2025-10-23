@@ -38,7 +38,18 @@ export default function ViewAdmins() {
   const [selectedAdmin, setSelectedAdmin] = useState<any | null>(null);
   const navigation = useNavigation();
 
-  
+  const { currentUser } = useSelector((state: RootState) => state.users);
+
+  // Role guard: only Admins can access this screen
+  useEffect(() => {
+    const role = currentUser?.role?.toLowerCase();
+    if (!role) return;
+    if (role !== "admin") {
+      const target = role === "tailor" ? "thome" : role === "customer" ? "chome" : "home";
+      // @ts-ignore - react-navigation reset typing
+      navigation.reset?.({ index: 0, routes: [{ name: target as never }] });
+    }
+  }, [currentUser, navigation]);
 
 const dispatch = useDispatch();
 const admins = useSelector((state: RootState) => state.users.list);

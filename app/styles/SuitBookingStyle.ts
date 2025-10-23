@@ -27,6 +27,12 @@ export const SuitBookingStyle = StyleSheet.create({
   buttonRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 10 },
   actionBtn: { padding: 10, borderRadius: 8, alignItems: "center" },
   actionText: { color: "#fff", fontWeight: "bold" },
+  badge: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 12,
+  },
+  badgeText: { color: "#fff", fontWeight: "bold" },
   btn: {
     padding: 12,
     borderRadius: 10,
@@ -35,5 +41,5 @@ export const SuitBookingStyle = StyleSheet.create({
     backgroundColor: "#3b82f6",
     marginEnd: 10,
   },
-  btnText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  btnText: { color: "white", fontWeight: "600", fontSize: 14 },
 });

@@ -1,8 +1,8 @@
+import { SuitBookingApi, UserApi } from "@/api/apis";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { ScrollView, StyleSheet, Text, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
-import { SuitBookingApi, UserApi } from "@/api/apis";
 import { setBookings, setSuitBookingError, setSuitBookingLoading, SuitBooking } from "../redux/slices/suitBookingSlice";
 import { setUsers, User } from "../redux/slices/userSlice";
 import { RootState } from "../redux/store";
@@ -58,13 +58,14 @@ export default function TailorDashboard() {
       dispatch(setSuitBookingLoading(false));
     }
   };
-
+ 
   // Fetch Users
   const GetUser = async () => {
     try {
       const res = await axios.get(UserApi.getUsers);
       const mapped = res.data.map((u: any, index: number) => ({
         id: u._id || index.toString(),
+        UserId: u.UserId,
         name: u.name,
         email: u.email,
         phone: u.phone,
@@ -86,10 +87,21 @@ export default function TailorDashboard() {
   }, []);
 
   useEffect(() => {
-    const totalBookings = allBookings.length;
-    const completedOrders = allBookings.filter(b => b.status === "Completed").length;
-    const pendingOrders = allBookings.filter(b => b.status === "Pending").length;
-    const totalCustomers = allUsers.filter(u => u.role === "Customer").length;
+    const currentId = currentUser?.id;
+    // Filter bookings that belong to current tailor
+    const myBookings = allBookings.filter((b) =>
+      (b.userId?.toString() || "") === (currentId || "")
+    );
+
+    const totalBookings = myBookings.length;
+    const completedOrders = myBookings.filter((b) => (b.status || "").toLowerCase() === "completed".toLowerCase()).length;
+    const pendingOrders = myBookings.filter((b) => (b.status || "").toLowerCase() === "pending".toLowerCase()).length;
+
+    // Customers whose role is customer and were added by current tailor (UserId links to owner)
+    const totalCustomers = allUsers.filter((u) =>
+      (u.role || "").toLowerCase() === "customer" &&
+      (u as any).UserId === currentId
+    ).length;
 
     setStats({
       totalBookings,
@@ -97,7 +109,7 @@ export default function TailorDashboard() {
       pendingOrders,
       totalCustomers,
     });
-  }, [allBookings, allUsers]);
+  }, [allBookings, allUsers, currentUser]);
 
   return (
     <ScrollView style={styles.container}>

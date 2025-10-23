@@ -1,14 +1,14 @@
 import { SuitBookingApi } from "@/api/apis";
-import {SuitBookingStyle} from "../styles/SuitBookingStyle"
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
 import { useLocalSearchParams } from "expo-router";
 import React, { useEffect, useLayoutEffect, useState } from "react";
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { useDispatch, useSelector } from "react-redux";
 import BookingModal from "../Models/bookingsuit";
 import { setBookings, setSuitBookingError, updateSuitBooking } from "../redux/slices/suitBookingSlice";
 import { RootState } from "../redux/store";
+import { SuitBookingStyle } from "../styles/SuitBookingStyle";
 
 interface Booking {
   id: string;
@@ -17,7 +17,7 @@ interface Booking {
   completionDate: string;
   stitchingFee: string | number;
  status: BookingStatus;
-  image?: string;
+  image?: string[];
 }
 type BookingStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
 
@@ -49,7 +49,7 @@ export default function ViewBookings() {
           style={[SuitBookingStyle.btn, { backgroundColor: "black", marginTop: 20 }]}
           onPress={openAddModal}
         >
-          <Text style={SuitBookingStyle.btnText}>+</Text>
+          <Text style={SuitBookingStyle.btnText}>+</Text> 
         </TouchableOpacity>
       ),
     });
@@ -129,7 +129,7 @@ const mapped = filtered.map((b: any, index: number) => ({
   completionDate: b.completionDate || "",
   stitchingFee: b.stitchingFee || 0,
   status: b.status || "Pending",
-  image: b.image?.[0] || null,
+  image: Array.isArray(b.image) ? b.image : b.image ? [b.image] : [],
   createdAt: b.createdAt || "",
   updatedAt: b.updatedAt || "",
 }));
@@ -170,9 +170,6 @@ const mapped = filtered.map((b: any, index: number) => ({
   };
 
   // 🔄 Toggle booking status
-
-
-type BookingStatus = "Pending" | "In Progress" | "Completed" | "Cancelled";
 
 const handleStatus = async (id: string) => {
   const statusOptions: BookingStatus[] = ["Pending", "In Progress", "Completed", "Cancelled"];
@@ -222,38 +219,34 @@ const handleStatus = async (id: string) => {
 
       {Bookings.map((b: any, index: any) => (
         <View key={b.id} style={SuitBookingStyle.card}>
-          {b.image && b.image.length > 0 ? (
-  <Image
-    source={{ uri: b.image[0] }} // 👈 use first image
-    style={SuitBookingStyle.image}
-    resizeMode="cover"
-  />
-) : (
-  <Text style={{ fontStyle: "italic", color: "#6b7280", marginTop: 5 }}>
-    No image available
-  </Text>
-)}
+          {Array.isArray(b.image) && b.image.length > 0 ? (
+            <Image
+              source={{ uri: b.image[0] }}
+              style={SuitBookingStyle.image}
+              resizeMode="cover"
+            />
+          ) : (
+            <Text style={{ fontStyle: "italic", color: "#6b7280", marginTop: 5 }}>
+              No image available
+            </Text>
+          )}
 
           <Text style={SuitBookingStyle.cardText}>Booking Date: {b.bookingDate}</Text>
           <Text style={SuitBookingStyle.cardText}>Measurement Date: {b.measurementDate}</Text>
           <Text style={SuitBookingStyle.cardText}>Completion Date: {b.completionDate}</Text>
           <Text style={SuitBookingStyle.cardText}>Stitching Fee: {b.stitchingFee}</Text>
-          <Text style={SuitBookingStyle.cardText}>Status: {b.status}</Text>
+          <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 5 }}>
+            <Text style={SuitBookingStyle.cardText}>Status: </Text>
+            <View style={[SuitBookingStyle.badge, { backgroundColor: getStatusColor(b.status) }]}>
+              <Text style={SuitBookingStyle.badgeText}>{b.status}</Text>
+            </View>
+          </View>
 
           <View style={SuitBookingStyle.buttonRow}>
             
 
             {/* 🔄 Status toggle button */}
-            <TouchableOpacity
-              style={[
-                SuitBookingStyle.actionBtn,
-                { backgroundColor: getStatusColor(b.status), flex: 1, marginRight: 5 },
-              ]}
-              onPress={() => handleStatus(b.id)}
-            >
-              <Text style={SuitBookingStyle.actionText}>{b.status}</Text>
-            </TouchableOpacity>
-
+            
             <TouchableOpacity
               style={[SuitBookingStyle.actionBtn, { backgroundColor: "#f87171", flex: 1, marginLeft: 5 }]}
               onPress={() => deleteBooking(b.id)}

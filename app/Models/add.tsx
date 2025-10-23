@@ -244,7 +244,7 @@ const handleAddUser = async () => {
         <Picker.Item label="رول منتخب کریں" value="" />
         <Picker.Item label="ایڈمن" value="Admin" />
         <Picker.Item label="درزی" value="Tailor" />
-        <Picker.Item label="کسٹمر" value="Customer" />
+        {/* <Picker.Item label="کسٹمر" value="Customer" /> */}
       </Picker>
     </View>
   ) : currentUser?.role === "Tailor" ? null : (

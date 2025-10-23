@@ -1,4 +1,5 @@
 import { SuitBookingApi } from "@/api/apis";
+import DateTimePicker from "@react-native-community/datetimepicker";
 import axios from "axios";
 import * as ImagePicker from "expo-image-picker";
 import { useLocalSearchParams } from "expo-router";
@@ -6,15 +7,14 @@ import React, { useEffect, useState } from "react";
 import {
   Image,
   Modal,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  View,
-  Platform
+  View
 } from "react-native";
-import DateTimePicker from "@react-native-community/datetimepicker";
 import Toast from "react-native-toast-message";
 import { useDispatch, useSelector } from "react-redux";
 import { addSuitBooking } from "../redux/slices/suitBookingSlice";

@@ -209,23 +209,10 @@ export default function Layout() {
               ) : (
                 <TouchableOpacity
                   onPress={() => {
-                    const state: any = navigation.getState?.();
-                    const routeNames: string[] =
-                      (state?.routeNames as string[]) ||
-                      (state?.routes?.map((r: any) => r?.name).filter(Boolean) as string[]) ||
-                      [];
-                    const target = routeNames.includes("thome")
-                      ? "thome"
-                      : routeNames.includes("chome")
-                      ? "chome"
-                      : routeNames.includes("home")
-                      ? "home"
-                      : undefined;
+                    const role = currentUser?.role;
+                    const target = role === "Tailor" ? "thome" : role === "Customer" ? "chome" : "home";
                     if (target) {
-                      navigation.reset({
-                        index: 0,
-                        routes: [{ name: target }],
-                      });
+                      navigation.reset({ index: 0, routes: [{ name: target }] });
                     } else {
                       router.back();
                     }

@@ -115,10 +115,10 @@ const filteredMeasurements = (measurements ?? [])
     const mCustomerId =
       typeof m.customerId === "object" ? m.customerId?._id : m.customerId;
 
-    const userId = typeof m.UserId === "object" ? m.UserId?._id : m.UserId;
+    // const userId = typeof m.UserId === "object" ? m.UserId?._id : m.UserId;
 
     return (
-      userId?.toString() === currentUser?.id?.toString() &&
+      //userId?.toString() === currentUser?.id?.toString() &&
       mCustomerId?.toString() === customerId?.toString()
     );
   });
