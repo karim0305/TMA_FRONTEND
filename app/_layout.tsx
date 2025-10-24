@@ -8,12 +8,14 @@ import "@/global.css";
 import { ToastProvider } from "expo-toast";
 import Toast from "react-native-toast-message";
 import { PersistGate } from "redux-persist/integration/react";
+import NetworkStatusBanner from "@/components/NetworkStatusBanner";
 
 export default function RootLayout() {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
        <ToastProvider>
+      <NetworkStatusBanner />
       <Stack>
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="Login"
