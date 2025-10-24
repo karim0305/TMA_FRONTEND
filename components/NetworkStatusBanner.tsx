@@ -20,10 +20,18 @@ function useConnectivity() {
     if (NetInfo && NetInfo.addEventListener) {
       // Initial fetch
       NetInfo.fetch().then((state: any) => {
-        setIsConnected(Boolean(state?.isConnected && state?.isInternetReachable !== false));
+        const online =
+          Platform.OS === "android"
+            ? Boolean(state?.isConnected)
+            : Boolean(state?.isConnected && state?.isInternetReachable !== false);
+        setIsConnected(online);
       });
       unsubscribe = NetInfo.addEventListener((state: any) => {
-        setIsConnected(Boolean(state?.isConnected && state?.isInternetReachable !== false));
+        const online =
+          Platform.OS === "android"
+            ? Boolean(state?.isConnected)
+            : Boolean(state?.isConnected && state?.isInternetReachable !== false);
+        setIsConnected(online);
       });
       return () => unsubscribe && unsubscribe();
     }

@@ -43,3 +43,7 @@ export const SuitBookingStyle = StyleSheet.create({
   },
   btnText: { color: "white", fontWeight: "600", fontSize: 14 },
 });
+
+export default function StylesPlaceholder() {
+  return null;
+}
