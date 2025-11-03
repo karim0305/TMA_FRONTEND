@@ -5,38 +5,49 @@ let NetInfo: any = null;
 try {
   // Optional dependency; will work once installed: `expo install @react-native-community/netinfo`
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  NetInfo = require("@react-native-community/netinfo");
+  const mod = require("@react-native-community/netinfo");
+  NetInfo = mod?.default ?? mod;
 } catch (e) {
-  // Fallback for web or when NetInfo isn't installed yet
   NetInfo = null;
 }
 
+// ✅ Updated connectivity hook
 function useConnectivity() {
   const [isConnected, setIsConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
+    let unsubscribeFn: (() => void) | null = null;
 
-    if (NetInfo && NetInfo.addEventListener) {
-      // Initial fetch
-      NetInfo.fetch().then((state: any) => {
-        const online =
-          Platform.OS === "android"
-            ? Boolean(state?.isConnected)
-            : Boolean(state?.isConnected && state?.isInternetReachable !== false);
-        setIsConnected(online);
-      });
-      unsubscribe = NetInfo.addEventListener((state: any) => {
-        const online =
-          Platform.OS === "android"
-            ? Boolean(state?.isConnected)
-            : Boolean(state?.isConnected && state?.isInternetReachable !== false);
-        setIsConnected(online);
-      });
-      return () => unsubscribe && unsubscribe();
+    const normalize = (state: any) => {
+      // ✅ Fix: Ignore buggy `isInternetReachable` in Android emulator
+      // Trust isConnected more than isInternetReachable
+      const online = Boolean(state?.isConnected);
+      setIsConnected(online);
+    };
+
+    if (NetInfo && typeof NetInfo.addEventListener === "function") {
+      // Initial fetch (some NetInfo versions return a Promise)
+      try {
+        NetInfo.fetch()
+          .then(normalize)
+          .catch(() => setIsConnected(true)); // assume online if fetch fails
+      } catch {
+        setIsConnected(true);
+      }
+
+      const sub = NetInfo.addEventListener(normalize);
+      if (typeof sub === "function") {
+        unsubscribeFn = sub;
+      } else if (sub && typeof sub.remove === "function") {
+        unsubscribeFn = () => sub.remove();
+      }
+
+      return () => {
+        if (unsubscribeFn) unsubscribeFn();
+      };
     }
 
-    // Web or no NetInfo installed: use navigator.onLine
+    // ✅ Fallback for web or when NetInfo isn't installed
     const update = () => setIsConnected(typeof navigator !== "undefined" ? navigator.onLine : true);
     update();
     if (Platform.OS === "web") {
@@ -47,11 +58,16 @@ function useConnectivity() {
         window.removeEventListener("offline", update);
       };
     }
+
+    // ✅ Native fallback when NetInfo missing
+    setIsConnected(true);
+    return;
   }, []);
 
   return isConnected;
 }
 
+// ✅ Final Component
 export default function NetworkStatusBanner() {
   const isConnected = useConnectivity();
   const [visible, setVisible] = useState(false);
@@ -62,7 +78,7 @@ export default function NetworkStatusBanner() {
     if (isConnected === null) return; // still determining
 
     if (isConnected) {
-      // show a short green banner when back online
+      // show short green banner when back online
       setMode("online");
       setVisible(true);
       if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
@@ -78,8 +94,10 @@ export default function NetworkStatusBanner() {
     }
   }, [isConnected]);
 
-  useEffect(() => () => {
-    if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+  useEffect(() => {
+    return () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+    };
   }, []);
 
   const styles = useMemo(
@@ -120,16 +138,14 @@ export default function NetworkStatusBanner() {
 
   const isOffline = mode === "offline";
   const backgroundColor = isOffline ? "#ef4444" : "#16a34a"; // red-500 / green-600
-  const message = isOffline ? "No internet connection. Trying to reconnect…" : "Back online";
+  const message = isOffline
+    ? "No internet connection. Trying to reconnect…"
+    : "Back online";
 
   return (
     <View pointerEvents="box-none" style={styles.container}>
       <View style={[styles.bar, { backgroundColor }]}>
-        {isOffline ? (
-          <ActivityIndicator size="small" color="#fff" />
-        ) : (
-          <ActivityIndicator size="small" color="#fff" />
-        )}
+        <ActivityIndicator size="small" color="#fff" />
         <Text style={styles.text}>{message}</Text>
       </View>
     </View>
