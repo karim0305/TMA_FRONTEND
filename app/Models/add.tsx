@@ -118,8 +118,8 @@ const handleAddUser = async () => {
       ...newUser,
       // newUser.image already has the Cloudinary URL
       image: newUser.image,
-      UserId:currentUser?.id,
-       status: currentUser ? "Active" : "Inactive",  
+      UserId: currentUser?.id ?? "",
+      status: currentUser ? "Active" : "Inactive",
     };
 
     const res = await axios.post(UserApi.addUser, userPayload);
@@ -133,19 +133,27 @@ const handleAddUser = async () => {
     console.log("✅ User Added Successfully:", res.data);
     onClose();
 
-    // Reset form
-    // setNewUser({
-    //   name: "",
-    //   phone: "",
-    //   cnic: "",
-    //   address: "",
-    //   role: "",
-    //   email: "",
-    //   password: "",
-    //   image: "",
-    // });
+    //Reset form
+    setNewUser({
+      UserId: currentUser?.id ?? "",
+    name: "",
+    phone: "",
+    cnic: "",
+    address: "",
+    role: "",
+    status:"Inactive",
+    email: "",
+    password: "",
+    image: "",
+    });
   } catch (err: any) {
-    console.error("❌ Error:", err.response?.data || err.message);
+       Toast.show({
+                type: "error",
+                text1: "User Registration Failed! ❌ ",
+                text2: err.response?.data?.message || "User Added failed! 🎉",
+                position: "top",
+                visibilityTime: 3000,
+              });
   } finally {
     setLoading(false);
   }
